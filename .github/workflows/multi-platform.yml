@@ -9,6 +9,9 @@ on:
     - cron: '0 12 * * *'  # Run daily at noon UTC
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
   test-powershell-cross-platform:
     name: Test PowerShell on ${{ matrix.os }}
