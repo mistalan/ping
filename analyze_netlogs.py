@@ -63,10 +63,24 @@ def detect_netwatch_incidents(df, lat_thresh, loss_thresh):
       ping_<target>_avg_ms,ping_<target>_loss_pct, ...
     """
     incidents = []
+    
+    # Handle both pandas DataFrame and list of dicts
+    is_dataframe = pd is not None and isinstance(df, pd.DataFrame)
+    
+    if is_dataframe:
+        columns = df.columns
+        rows = list(df.iterrows())
+        get_row = lambda idx_row: idx_row[1]
+    else:
+        # List of dicts
+        columns = df[0].keys() if df else []
+        rows = list(enumerate(df))
+        get_row = lambda idx_row: idx_row[1]
 
     # 1) DNS-Fehler
-    if "dns_ok" in df.columns:
-        for i, row in df.iterrows():
+    if "dns_ok" in columns:
+        for i, row_data in rows:
+            row = get_row((i, row_data))
             if str(row.get("dns_ok", "1")) in ("0", "False", "false"):
                 incidents.append({
                     "source": "PC",
@@ -77,9 +91,10 @@ def detect_netwatch_incidents(df, lat_thresh, loss_thresh):
 
     # 2) Adapter/Media-Statuswechsel
     for col in ("adapter", "media_status"):
-        if col in df.columns and len(df) > 1:
+        if col in columns and len(df) > 1:
             prev = None
-            for i, row in df.iterrows():
+            for i, row_data in rows:
+                row = get_row((i, row_data))
                 cur = str(row[col])
                 if prev is not None and cur != prev:
                     incidents.append({
@@ -93,7 +108,7 @@ def detect_netwatch_incidents(df, lat_thresh, loss_thresh):
     # 3) Ping/Verlust je Ziel
     # Finde dynamisch alle Ziele
     targets = []
-    for c in df.columns:
+    for c in columns:
         if c.startswith("ping_") and c.endswith("_avg_ms"):
             t = c[len("ping_"):-len("_avg_ms")]
             targets.append(t)
@@ -101,11 +116,12 @@ def detect_netwatch_incidents(df, lat_thresh, loss_thresh):
     for t in targets:
         avg_col = f"ping_{t}_avg_ms"
         loss_col = f"ping_{t}_loss_pct"
-        if avg_col not in df.columns:
+        if avg_col not in columns:
             continue
 
         # Latency spikes
-        for i, row in df.iterrows():
+        for i, row_data in rows:
+            row = get_row((i, row_data))
             ts = row["timestamp"]
             avg = to_float(row.get(avg_col))
             if not math.isnan(avg) and avg > lat_thresh:
@@ -117,8 +133,9 @@ def detect_netwatch_incidents(df, lat_thresh, loss_thresh):
                 })
 
         # Loss spikes
-        if loss_col in df.columns:
-            for i, row in df.iterrows():
+        if loss_col in columns:
+            for i, row_data in rows:
+                row = get_row((i, row_data))
                 ts = row["timestamp"]
                 loss = to_float(row.get(loss_col))
                 if not math.isnan(loss) and loss > loss_thresh:
@@ -138,9 +155,22 @@ def detect_fritz_incidents(df):
       wan_last_error, common_bytes_sent, common_bytes_recv, dsl_link_status
     """
     incidents = []
+    
+    # Handle both pandas DataFrame and list of dicts
+    is_dataframe = pd is not None and isinstance(df, pd.DataFrame)
+    
+    if is_dataframe:
+        rows = list(df.iterrows())
+        get_row = lambda idx_row: idx_row[1]
+    else:
+        # List of dicts
+        rows = list(enumerate(df))
+        get_row = lambda idx_row: idx_row[1]
+    
     # Uptime-Reset / Statuswechsel / IP-Wechsel
     prev = None
-    for i, row in df.iterrows():
+    for i, row_data in rows:
+        row = get_row((i, row_data))
         ts = row["timestamp"]
         if prev is not None:
             # Uptime rückwärts -> Reconnect
@@ -274,15 +304,17 @@ def main():
         df_nw = nw if isinstance(nw, pd.DataFrame) else pd.DataFrame(nw)
         df_fr = fr if isinstance(fr, pd.DataFrame) else pd.DataFrame(fr)
     else:
-        print("Hinweis: pandas nicht installiert")
+        print("Hinweis: pandas nicht installiert - Fallback-Modus (langsamer)")
+        df_nw = nw
+        df_fr = fr
 
     # Sortieren
     if pd is not None:
         df_nw = df_nw.sort_values("timestamp").reset_index(drop=True)
         df_fr = df_fr.sort_values("timestamp").reset_index(drop=True)
     else:
-        df_nw = sorted(df_nw, key=lambda r: r["timestamp"])
-        df_fr = sorted(df_fr, key=lambda r: r["timestamp"])
+        df_nw = sorted(df_nw, key=lambda r: r.get("timestamp"))
+        df_fr = sorted(df_fr, key=lambda r: r.get("timestamp"))
 
     # Detektion
     inc_nw = detect_netwatch_incidents(df_nw, args.latency, args.loss)
@@ -307,31 +339,50 @@ def main():
     # Konsole: kurze Zusammenfassung
     print(f"\nIncidents geschrieben nach: {os.path.abspath(args.out)}")
     if not incidents:
-        print("✅ Keine Auffälligkeiten gefunden.")
+        print("[OK] Keine Auffälligkeiten gefunden.")
     else:
-        print("⚠️ Erkannte Ereignisse:")
+        print("[!] Erkannte Ereignisse:")
         for ev in incidents:
-            print(f"- [{ev['source']}/{ev['type']}] {ev['start'].strftime(TIME_FMT)} – {ev['end'].strftime(TIME_FMT)} ({human_duration(ev['end']-ev['start'])}) {(' | ' + ev['details']) if ev.get('details') else ''}")
+            print(f"- [{ev['source']}/{ev['type']}] {ev['start'].strftime(TIME_FMT)} - {ev['end'].strftime(TIME_FMT)} ({human_duration(ev['end']-ev['start'])}) {(' | ' + ev['details']) if ev.get('details') else ''}")
 
     # Optional Plots
     if args.plots and pd is not None:
         try:
             import matplotlib.pyplot as plt
             # einfache Ping-Plot je Ziel
-            targets = [c[len("ping_"):-len("_avg_ms")] for c in df_nw.columns if c.startswith("ping_") and c.endswith("_avg_ms")]
+            is_dataframe = isinstance(df_nw, pd.DataFrame)
+            if is_dataframe:
+                targets = [c[len("ping_"):-len("_avg_ms")] for c in df_nw.columns if c.startswith("ping_") and c.endswith("_avg_ms")]
+            else:
+                # For list of dicts, get columns from first row
+                targets = [c[len("ping_"):-len("_avg_ms")] for c in df_nw[0].keys() if c.startswith("ping_") and c.endswith("_avg_ms")] if df_nw else []
+            
             for t in targets:
                 col = f"ping_{t}_avg_ms"
-                if col in df_nw.columns:
-                    plt.figure()
-                    plt.plot(df_nw["timestamp"], df_nw[col])
-                    plt.title(f"Latency: {t}")
-                    plt.xlabel("Zeit"); plt.ylabel("ms")
-                    plt.tight_layout()
-                    plt.savefig(f"latency_{t}.png")
-                    plt.close()
-            print("📈 Plots gespeichert (latency_*.png).")
+                if is_dataframe:
+                    if col in df_nw.columns:
+                        plt.figure()
+                        plt.plot(df_nw["timestamp"], df_nw[col])
+                        plt.title(f"Latency: {t}")
+                        plt.xlabel("Zeit"); plt.ylabel("ms")
+                        plt.tight_layout()
+                        plt.savefig(f"latency_{t}.png")
+                        plt.close()
+                else:
+                    # For list of dicts, extract data manually
+                    timestamps = [row["timestamp"] for row in df_nw if col in row]
+                    values = [to_float(row.get(col)) for row in df_nw if col in row]
+                    if timestamps and values:
+                        plt.figure()
+                        plt.plot(timestamps, values)
+                        plt.title(f"Latency: {t}")
+                        plt.xlabel("Zeit"); plt.ylabel("ms")
+                        plt.tight_layout()
+                        plt.savefig(f"latency_{t}.png")
+                        plt.close()
+            print("[*] Plots gespeichert (latency_*.png).")
         except Exception as e:
-            print(f"(Plots übersprungen: {e})")
+            print(f"(Plots uebersprungen: {e})")
 
 if __name__ == "__main__":
     main()
