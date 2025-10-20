@@ -280,8 +280,6 @@ def main():
     if pd is not None:
         df_nw = df_nw.sort_values("timestamp").reset_index(drop=True)
         df_fr = df_fr.sort_values("timestamp").reset_index(drop=True)
-    else:
-        print("Hinweis: pandas nicht installiert")
 
     # Detektion
     inc_nw = detect_netwatch_incidents(df_nw, args.latency, args.loss)
@@ -329,7 +327,7 @@ def main():
                     plt.xlabel("Zeit"); plt.ylabel("ms")
                     plt.tight_layout()
                     plt.savefig(f"latency_{t}.png")
-            plt.close()
+                plt.close()
             print("📈 Plots gespeichert (latency_*.png).")
         except Exception as e:
             print(f"(Plots übersprungen: {e})")
