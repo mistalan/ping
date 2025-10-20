@@ -190,13 +190,24 @@ def detect_fritz_incidents(df):
 
     return incidents
 
+def extract_details_key(details):
+    """
+    Extracts a grouping key from the details string, handling multiple separators.
+    """
+    if not details:
+        return ""
+    for sep in [":", " -> "]:
+        if sep in details:
+            return details.split(sep)[0].strip()
+    return details.strip()  
+
 def aggregate_bursts(incidents, min_span_seconds=MIN_BURST_SECONDS):
     """
     Gleiche Typ+Quelle zusammen, wenn Einträge zeitlich eng beieinander liegen.
     """
     by_key = defaultdict(list)
     for inc in incidents:
-        key = (inc["source"], inc["type"], inc.get("details","").split(":")[0])  # gruppiere pro Ziel grob
+        key = (inc["source"], inc["type"], extract_details_key(inc.get("details","")))  # gruppiere pro Ziel grob
         by_key[key].append(inc)
 
     aggregated = []
@@ -254,7 +265,7 @@ def main():
     ap.add_argument("--netwatch", required=True, help="Pfad zu netwatch_log.csv")
     ap.add_argument("--fritz", required=True, help="Pfad zu fritz_status_log.csv")
     ap.add_argument("--out", default="incidents.csv", help="Ausgabe-CSV für Incidents")
-    ap.add_argument("--latency", type=float, default=DEFAULT_LATENCY_SPIKE_MS, help="Latency-Spike-Schwelle in ms (default 50)")
+    ap.add_argument("--latency", type=float, default=DEFAULT_LATENCY_SPIKE_MS, help="Latency-Spike-Schwelle in ms (default 20)")
     ap.add_argument("--loss", type=float, default=DEFAULT_LOSS_SPIKE_PCT, help="Loss-Spike-Schwelle in % (default 1.0)")
     ap.add_argument("--plots", action="store_true", help="Einfache Plots erstellen (benötigt matplotlib+pandas)")
     args = ap.parse_args()
