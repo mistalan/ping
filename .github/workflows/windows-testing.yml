@@ -62,17 +62,20 @@ jobs:
           python-version: '3.12'
 
       - name: Install dependencies
+        shell: pwsh
         run: |
           python -m pip install --upgrade pip
           pip install fritzconnection
 
       - name: Test fritzlog_pull.py
+        shell: pwsh
         run: |
           python -m py_compile fritzlog_pull.py
           python -c "import fritzlog_pull; print('✓ Import successful')"
           python fritzlog_pull.py --help
 
       - name: Test analyze_netlogs.py
+        shell: pwsh
         run: |
           python -m py_compile analyze_netlogs.py
           python -c "import analyze_netlogs; print('✓ Import successful')"
@@ -93,6 +96,7 @@ jobs:
           python-version: '3.12'
 
       - name: Install dependencies
+        shell: pwsh
         run: |
           pip install fritzconnection
 
@@ -103,13 +107,14 @@ jobs:
           Install-Module -Name Pester -Force -Scope CurrentUser -SkipPublisherCheck
 
       - name: Run all validations
+        shell: pwsh
         run: |
-          echo "Testing Python scripts..."
+          Write-Host "Testing Python scripts..."
           python -m py_compile fritzlog_pull.py
           python -m py_compile analyze_netlogs.py
           python fritzlog_pull.py --help
           python analyze_netlogs.py --help
-          echo "✓ Python validations passed"
+          Write-Host "✓ Python validations passed"
 
       - name: Run PowerShell tests
         shell: pwsh

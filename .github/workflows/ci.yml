@@ -72,41 +72,42 @@ jobs:
           path: test-results.xml
 
   validate-python:
-    name: Validate Python Scripts
+    name: Validate Python Scripts (3.12)
     runs-on: windows-latest
-    strategy:
-      matrix:
-        python-version: ['3.12']
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up Python ${{ matrix.python-version }}
+      - name: Set up Python 3.12
         uses: actions/setup-python@v5
         with:
-          python-version: ${{ matrix.python-version }}
+          python-version: '3.12'
 
       - name: Install dependencies
+        shell: pwsh
         run: |
           python -m pip install --upgrade pip
           pip install fritzconnection
 
       - name: Validate Python syntax
+        shell: pwsh
         run: |
           python -m py_compile fritzlog_pull.py
           python -m py_compile analyze_netlogs.py
-          echo "✓ Python syntax validation passed"
+          Write-Host "✓ Python syntax validation passed"
 
       - name: Test imports
+        shell: pwsh
         run: |
           python -c "import fritzlog_pull; print('✓ fritzlog_pull.py imports successfully')"
           python -c "import analyze_netlogs; print('✓ analyze_netlogs.py imports successfully')"
 
       - name: Test CLI help
+        shell: pwsh
         run: |
           python fritzlog_pull.py --help
           python analyze_netlogs.py --help
-          echo "✓ CLI help commands work"
+          Write-Host "✓ CLI help commands work"
 
   lint-python:
     name: Lint Python Code
@@ -121,11 +122,13 @@ jobs:
           python-version: '3.12'
 
       - name: Install linting tools
+        shell: pwsh
         run: |
           python -m pip install --upgrade pip
           pip install flake8 pylint
 
       - name: Run flake8
+        shell: pwsh
         run: |
           # Stop on errors, but allow warnings
           flake8 *.py --count --select=E9,F63,F7,F82 --show-source --statistics
