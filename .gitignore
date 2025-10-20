@@ -4,6 +4,9 @@ __pycache__/
 *$py.class
 *.so
 .Python
+*.egg-info/
+dist/
+build/
 
 # Virtual environments
 venv/
@@ -21,5 +24,7 @@ ENV/
 .DS_Store
 Thumbs.db
 
-# Logs
+# Test outputs
+/tmp/
+*.csv
 *.log
