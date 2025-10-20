@@ -63,10 +63,24 @@ def detect_netwatch_incidents(df, lat_thresh, loss_thresh):
       ping_<target>_avg_ms,ping_<target>_loss_pct, ...
     """
     incidents = []
+    
+    # Handle both pandas DataFrame and list of dicts
+    is_dataframe = pd is not None and isinstance(df, pd.DataFrame)
+    
+    if is_dataframe:
+        columns = df.columns
+        rows = list(df.iterrows())
+        get_row = lambda idx_row: idx_row[1]
+    else:
+        # List of dicts
+        columns = df[0].keys() if df else []
+        rows = list(enumerate(df))
+        get_row = lambda idx_row: idx_row[1]
 
     # 1) DNS-Fehler
-    if "dns_ok" in df.columns:
-        for i, row in df.iterrows():
+    if "dns_ok" in columns:
+        for i, row_data in rows:
+            row = get_row((i, row_data))
             if str(row.get("dns_ok", "1")) in ("0", "False", "false"):
                 incidents.append({
                     "source": "PC",
@@ -77,9 +91,10 @@ def detect_netwatch_incidents(df, lat_thresh, loss_thresh):
 
     # 2) Adapter/Media-Statuswechsel
     for col in ("adapter", "media_status"):
-        if col in df.columns and len(df) > 1:
+        if col in columns and len(df) > 1:
             prev = None
-            for i, row in df.iterrows():
+            for i, row_data in rows:
+                row = get_row((i, row_data))
                 cur = str(row[col])
                 if prev is not None and cur != prev:
                     incidents.append({
@@ -93,7 +108,7 @@ def detect_netwatch_incidents(df, lat_thresh, loss_thresh):
     # 3) Ping/Verlust je Ziel
     # Finde dynamisch alle Ziele
     targets = []
-    for c in df.columns:
+    for c in columns:
         if c.startswith("ping_") and c.endswith("_avg_ms"):
             t = c[len("ping_"):-len("_avg_ms")]
             targets.append(t)
@@ -101,11 +116,12 @@ def detect_netwatch_incidents(df, lat_thresh, loss_thresh):
     for t in targets:
         avg_col = f"ping_{t}_avg_ms"
         loss_col = f"ping_{t}_loss_pct"
-        if avg_col not in df.columns:
+        if avg_col not in columns:
             continue
 
         # Latency spikes
-        for i, row in df.iterrows():
+        for i, row_data in rows:
+            row = get_row((i, row_data))
             ts = row["timestamp"]
             avg = to_float(row.get(avg_col))
             if not math.isnan(avg) and avg > lat_thresh:
@@ -117,8 +133,9 @@ def detect_netwatch_incidents(df, lat_thresh, loss_thresh):
                 })
 
         # Loss spikes
-        if loss_col in df.columns:
-            for i, row in df.iterrows():
+        if loss_col in columns:
+            for i, row_data in rows:
+                row = get_row((i, row_data))
                 ts = row["timestamp"]
                 loss = to_float(row.get(loss_col))
                 if not math.isnan(loss) and loss > loss_thresh:
@@ -138,9 +155,22 @@ def detect_fritz_incidents(df):
       wan_last_error, common_bytes_sent, common_bytes_recv, dsl_link_status
     """
     incidents = []
+    
+    # Handle both pandas DataFrame and list of dicts
+    is_dataframe = pd is not None and isinstance(df, pd.DataFrame)
+    
+    if is_dataframe:
+        rows = list(df.iterrows())
+        get_row = lambda idx_row: idx_row[1]
+    else:
+        # List of dicts
+        rows = list(enumerate(df))
+        get_row = lambda idx_row: idx_row[1]
+    
     # Uptime-Reset / Statuswechsel / IP-Wechsel
     prev = None
-    for i, row in df.iterrows():
+    for i, row_data in rows:
+        row = get_row((i, row_data))
         ts = row["timestamp"]
         if prev is not None:
             # Uptime rückwärts -> Reconnect
@@ -274,15 +304,17 @@ def main():
         df_nw = nw if isinstance(nw, pd.DataFrame) else pd.DataFrame(nw)
         df_fr = fr if isinstance(fr, pd.DataFrame) else pd.DataFrame(fr)
     else:
-        print("Hinweis: pandas nicht installiert")
+        print("Hinweis: pandas nicht installiert - Fallback-Modus (langsamer)")
+        df_nw = nw
+        df_fr = fr
 
     # Sortieren
     if pd is not None:
         df_nw = df_nw.sort_values("timestamp").reset_index(drop=True)
         df_fr = df_fr.sort_values("timestamp").reset_index(drop=True)
     else:
-        df_nw = sorted(df_nw, key=lambda r: r["timestamp"])
-        df_fr = sorted(df_fr, key=lambda r: r["timestamp"])
+        df_nw = sorted(df_nw, key=lambda r: r.get("timestamp"))
+        df_fr = sorted(df_fr, key=lambda r: r.get("timestamp"))
 
     # Detektion
     inc_nw = detect_netwatch_incidents(df_nw, args.latency, args.loss)
