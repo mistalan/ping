@@ -253,7 +253,8 @@ Invoke-Pester .\NetWatch.Tests.ps1
 **NetWatchUI.ps1:**
 - If the UI doesn't start, ensure you're running on Windows with PowerShell 5+ or PowerShell Core 7+
 - If you get execution policy errors, run: `Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser`
-- Make sure python3 is in your PATH for FRITZ!Box logging and analysis to work
+- The UI will automatically detect Python using `python`, `python3`, or `py` commands
+- If Python is not found, you'll see a warning on startup - install Python and ensure it's in your PATH
 - Check the Activity Log in the Control tab for detailed error messages
 
 **NetWatch.ps1:**

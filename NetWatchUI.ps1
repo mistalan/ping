@@ -20,6 +20,26 @@ $script:NetWatchProcess = $null
 $script:FritzLogProcess = $null
 $script:IsTracking = $false
 
+# Detect available Python command
+function Get-PythonCommand {
+    # Try python3 first (Linux/WSL style)
+    if (Get-Command "python3" -ErrorAction SilentlyContinue) {
+        return "python3"
+    }
+    # Try python (Windows style)
+    if (Get-Command "python" -ErrorAction SilentlyContinue) {
+        return "python"
+    }
+    # Try py launcher (Windows Python launcher)
+    if (Get-Command "py" -ErrorAction SilentlyContinue) {
+        return "py"
+    }
+    # If none found, default to python and let it fail with a clear error
+    return "python"
+}
+
+$script:PythonCommand = Get-PythonCommand
+
 # Create the main form
 $form = New-Object System.Windows.Forms.Form
 $form.Text = "Network Monitor Control Panel"
@@ -345,7 +365,7 @@ $btnStartTracking.Add_Click({
                 $fritzArgs += @("--user", $textFritzUser.Text)
             }
 
-            $script:FritzLogProcess = Start-Process -FilePath "python3" -ArgumentList $fritzArgs -PassThru -WindowStyle Minimized
+            $script:FritzLogProcess = Start-Process -FilePath $script:PythonCommand -ArgumentList $fritzArgs -PassThru -WindowStyle Minimized
             $logOutput.AppendText("[$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')] Started fritzlog_pull.py (PID: $($script:FritzLogProcess.Id))`r`n")
         }
 
@@ -452,7 +472,7 @@ $btnAnalyze.Add_Click({
         $logOutput.AppendText("[$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')] Starting analysis...`r`n")
 
         # Run analysis and capture output
-        $result = & python3 $analyzeArgs 2>&1 | Out-String
+        $result = & $script:PythonCommand $analyzeArgs 2>&1 | Out-String
         $logOutput.AppendText($result)
         $logOutput.AppendText("[$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')] Analysis complete. Results saved to: $($textAnalyzeOut.Text)`r`n")
 
@@ -538,5 +558,19 @@ $form.Add_FormClosing({
 })
 
 # Show the form
-$form.Add_Shown({$form.Activate()})
+$form.Add_Shown({
+    $form.Activate()
+    # Check if Python is available
+    if (-not (Get-Command $script:PythonCommand -ErrorAction SilentlyContinue)) {
+        [System.Windows.Forms.MessageBox]::Show(
+            "Python is not found in your PATH!`n`nPlease install Python and ensure it's accessible via 'python', 'python3', or 'py' command.`n`nFRITZ!Box logging and analysis features will not work without Python.",
+            "Python Not Found",
+            [System.Windows.Forms.MessageBoxButtons]::OK,
+            [System.Windows.Forms.MessageBoxIcon]::Warning
+        )
+        $logOutput.AppendText("[$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')] WARNING: Python not found in PATH. Using default command: $($script:PythonCommand)`r`n")
+    } else {
+        $logOutput.AppendText("[$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')] Python detected: $($script:PythonCommand)`r`n")
+    }
+})
 [void]$form.ShowDialog()
