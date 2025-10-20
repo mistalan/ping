@@ -1,0 +1,169 @@
+name: Deploy
+
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  package:
+    name: Package Scripts
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install fritzconnection
+
+      - name: Validate scripts
+        run: |
+          python -m py_compile fritzlog_pull.py
+          python -m py_compile analyze_netlogs.py
+          python -c "import fritzlog_pull"
+          python -c "import analyze_netlogs"
+
+      - name: Install PowerShell
+        run: |
+          pwsh --version
+
+      - name: Validate PowerShell script
+        shell: pwsh
+        run: |
+          $ast = [System.Management.Automation.Language.Parser]::ParseFile("./NetWatch.ps1", [ref]$null, [ref]$null)
+          if (-not $ast) {
+            Write-Error "NetWatch.ps1 syntax validation failed"
+            exit 1
+          }
+
+      - name: Create deployment package
+        run: |
+          mkdir -p package
+          
+          # Copy scripts
+          cp NetWatch.ps1 package/
+          cp fritzlog_pull.py package/
+          cp analyze_netlogs.py package/
+          cp README.md package/
+          
+          # Create requirements.txt
+          echo "fritzconnection>=1.15.0" > package/requirements.txt
+          
+          # Create quick start guide
+          cat > package/QUICKSTART.md << 'EOF'
+          # Quick Start Guide
+          
+          ## Windows Network Monitor
+          
+          ```powershell
+          .\NetWatch.ps1 -IntervalSeconds 30
+          ```
+          
+          Stop with Ctrl+C. Logs saved to `~/Ping/Log/netwatch_log.csv`
+          
+          ## FRITZ!Box Logger
+          
+          ```bash
+          pip install -r requirements.txt
+          python3 fritzlog_pull.py --password YOUR_PASSWORD
+          ```
+          
+          Stop with Ctrl+C. Logs saved to `~/Ping/Log/fritz_status_log.csv`
+          
+          ## Analyze Logs
+          
+          ```bash
+          python3 analyze_netlogs.py \
+            --netwatch ~/Ping/Log/netwatch_log.csv \
+            --fritz ~/Ping/Log/fritz_status_log.csv \
+            --out incidents.csv
+          ```
+          
+          Results saved to `incidents.csv`
+          
+          ## Need Help?
+          
+          See README.md for complete documentation.
+          EOF
+
+      - name: Generate package metadata
+        run: |
+          cat > package/PACKAGE_INFO.txt << EOF
+          Package: ping network monitoring tools
+          Build Date: $(date -u +"%Y-%m-%d %H:%M:%S UTC")
+          Git Commit: ${{ github.sha }}
+          Git Branch: ${{ github.ref_name }}
+          Build Number: ${{ github.run_number }}
+          Build ID: ${{ github.run_id }}
+          EOF
+
+      - name: Create ZIP archive
+        run: |
+          cd package
+          zip -r ../ping-latest.zip .
+          cd ..
+
+      - name: Create tarball
+        run: |
+          cd package
+          tar -czf ../ping-latest.tar.gz .
+          cd ..
+
+      - name: Generate checksums
+        run: |
+          sha256sum ping-latest.zip > checksums-latest.txt
+          sha256sum ping-latest.tar.gz >> checksums-latest.txt
+          cat checksums-latest.txt
+
+      - name: Upload ZIP artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ping-latest-zip
+          path: ping-latest.zip
+          retention-days: 90
+
+      - name: Upload tarball artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ping-latest-tarball
+          path: ping-latest.tar.gz
+          retention-days: 90
+
+      - name: Upload checksums
+        uses: actions/upload-artifact@v4
+        with:
+          name: ping-latest-checksums
+          path: checksums-latest.txt
+          retention-days: 90
+
+      - name: Summary
+        run: |
+          echo "### 📦 Deployment Package Created" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Build Information:**" >> $GITHUB_STEP_SUMMARY
+          echo "- Commit: \`${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- Branch: \`${{ github.ref_name }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- Run: #${{ github.run_number }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Package Contents:**" >> $GITHUB_STEP_SUMMARY
+          echo "- NetWatch.ps1" >> $GITHUB_STEP_SUMMARY
+          echo "- fritzlog_pull.py" >> $GITHUB_STEP_SUMMARY
+          echo "- analyze_netlogs.py" >> $GITHUB_STEP_SUMMARY
+          echo "- README.md" >> $GITHUB_STEP_SUMMARY
+          echo "- requirements.txt" >> $GITHUB_STEP_SUMMARY
+          echo "- QUICKSTART.md" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Checksums:**" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          cat checksums-latest.txt >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
