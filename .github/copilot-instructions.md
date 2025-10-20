@@ -13,7 +13,10 @@ Network monitoring tools for ping problems and disconnect analysis. **Very small
 ## Structure
 
 ```
-├── README.md (3 lines)    ├── NetWatch.ps1 (77 lines)    ├── fritzlog_pull.py (119 lines)
+├── README.md (3 lines)
+├── NetWatch.ps1 (77 lines)
+├── fritzlog_pull.py (119 lines)
+└── .github/copilot-instructions.md
 ```
 **No tests, no CI/CD, no build configs.**
 
