@@ -25,8 +25,8 @@ Describe "Default Parameters" {
     $defaultValueText | Should -Match "UserProfile"
     $defaultValueText | Should -Not -Match "MyDocuments"
     
-    # Verify it uses 'Logs' folder (plural)
-    $defaultValueText | Should -Match "'Logs'"
+    # Verify it uses 'Log' folder
+    $defaultValueText | Should -Match "'Log'"
   }
 }
 
