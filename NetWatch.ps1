@@ -1,7 +1,7 @@
 #requires -Version 5
 param(
   [int]$IntervalSeconds = 30,
-  [string]$OutCsv = "C:\Users\AlexB\Ping\Log\netwatch_log.csv",
+  [string]$OutCsv = [System.IO.Path]::Combine([Environment]::GetFolderPath('MyDocuments'), 'Ping', 'Log', 'netwatch_log.csv'),
   [string[]]$PingTargets = @("8.8.8.8","1.1.1.1","192.168.178.1","www.riotgames.com")
 )
 
