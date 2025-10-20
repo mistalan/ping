@@ -463,7 +463,6 @@ $btnAnalyze.Add_Click({
 
         $analyzeScript = Join-Path $scriptPath "analyze_netlogs.py"
         $analyzeArgs = @(
-            $analyzeScript,
             "--netwatch", $textNetWatchOut.Text,
             "--out", $textAnalyzeOut.Text,
             "--latency", $textLatency.Text,
@@ -486,7 +485,7 @@ $btnAnalyze.Add_Click({
         $logOutput.AppendText("[$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')] Starting analysis...`r`n")
 
         # Run analysis and capture output
-        $result = & $script:PythonCommand $analyzeArgs 2>&1 | Out-String
+        $result = & $script:PythonCommand $analyzeScript $analyzeArgs 2>&1 | Out-String
         $logOutput.AppendText($result)
         $logOutput.AppendText("[$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')] Analysis complete. Results saved to: $($textAnalyzeOut.Text)`r`n")
 
