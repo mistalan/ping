@@ -339,31 +339,50 @@ def main():
     # Konsole: kurze Zusammenfassung
     print(f"\nIncidents geschrieben nach: {os.path.abspath(args.out)}")
     if not incidents:
-        print("✅ Keine Auffälligkeiten gefunden.")
+        print("[OK] Keine Auffälligkeiten gefunden.")
     else:
-        print("⚠️ Erkannte Ereignisse:")
+        print("[!] Erkannte Ereignisse:")
         for ev in incidents:
-            print(f"- [{ev['source']}/{ev['type']}] {ev['start'].strftime(TIME_FMT)} – {ev['end'].strftime(TIME_FMT)} ({human_duration(ev['end']-ev['start'])}) {(' | ' + ev['details']) if ev.get('details') else ''}")
+            print(f"- [{ev['source']}/{ev['type']}] {ev['start'].strftime(TIME_FMT)} - {ev['end'].strftime(TIME_FMT)} ({human_duration(ev['end']-ev['start'])}) {(' | ' + ev['details']) if ev.get('details') else ''}")
 
     # Optional Plots
     if args.plots and pd is not None:
         try:
             import matplotlib.pyplot as plt
             # einfache Ping-Plot je Ziel
-            targets = [c[len("ping_"):-len("_avg_ms")] for c in df_nw.columns if c.startswith("ping_") and c.endswith("_avg_ms")]
+            is_dataframe = isinstance(df_nw, pd.DataFrame)
+            if is_dataframe:
+                targets = [c[len("ping_"):-len("_avg_ms")] for c in df_nw.columns if c.startswith("ping_") and c.endswith("_avg_ms")]
+            else:
+                # For list of dicts, get columns from first row
+                targets = [c[len("ping_"):-len("_avg_ms")] for c in df_nw[0].keys() if c.startswith("ping_") and c.endswith("_avg_ms")] if df_nw else []
+            
             for t in targets:
                 col = f"ping_{t}_avg_ms"
-                if col in df_nw.columns:
-                    plt.figure()
-                    plt.plot(df_nw["timestamp"], df_nw[col])
-                    plt.title(f"Latency: {t}")
-                    plt.xlabel("Zeit"); plt.ylabel("ms")
-                    plt.tight_layout()
-                    plt.savefig(f"latency_{t}.png")
-                    plt.close()
-            print("📈 Plots gespeichert (latency_*.png).")
+                if is_dataframe:
+                    if col in df_nw.columns:
+                        plt.figure()
+                        plt.plot(df_nw["timestamp"], df_nw[col])
+                        plt.title(f"Latency: {t}")
+                        plt.xlabel("Zeit"); plt.ylabel("ms")
+                        plt.tight_layout()
+                        plt.savefig(f"latency_{t}.png")
+                        plt.close()
+                else:
+                    # For list of dicts, extract data manually
+                    timestamps = [row["timestamp"] for row in df_nw if col in row]
+                    values = [to_float(row.get(col)) for row in df_nw if col in row]
+                    if timestamps and values:
+                        plt.figure()
+                        plt.plot(timestamps, values)
+                        plt.title(f"Latency: {t}")
+                        plt.xlabel("Zeit"); plt.ylabel("ms")
+                        plt.tight_layout()
+                        plt.savefig(f"latency_{t}.png")
+                        plt.close()
+            print("[*] Plots gespeichert (latency_*.png).")
         except Exception as e:
-            print(f"(Plots übersprungen: {e})")
+            print(f"(Plots uebersprungen: {e})")
 
 if __name__ == "__main__":
     main()
