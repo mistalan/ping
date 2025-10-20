@@ -280,13 +280,14 @@ def main():
     if pd is not None:
         df_nw = df_nw.sort_values("timestamp").reset_index(drop=True)
         df_fr = df_fr.sort_values("timestamp").reset_index(drop=True)
+    else:
+        df_nw = sorted(df_nw, key=lambda r: r["timestamp"])
+        df_fr = sorted(df_fr, key=lambda r: r["timestamp"])
 
     # Detektion
     inc_nw = detect_netwatch_incidents(df_nw, args.latency, args.loss)
     inc_fr = detect_fritz_incidents(df_fr)
     incidents = inc_nw + inc_fr
-    df_nw = sorted(df_nw, key=lambda r: r["timestamp"])
-    df_fr = sorted(df_fr, key=lambda r: r["timestamp"])
     # Bursts aggregieren
     incidents = aggregate_bursts(incidents)
 
