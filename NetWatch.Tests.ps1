@@ -6,6 +6,30 @@ BeforeAll {
   Invoke-Expression $functionsOnly
 }
 
+Describe "Default Parameters" {
+  It "OutCsv default path uses UserProfile folder, not MyDocuments" {
+    # Parse the script to extract the default OutCsv parameter value
+    $scriptPath = "$PSScriptRoot/NetWatch.ps1"
+    $ast = [System.Management.Automation.Language.Parser]::ParseFile($scriptPath, [ref]$null, [ref]$null)
+    
+    # Find the param block
+    $paramBlock = $ast.FindAll({$args[0] -is [System.Management.Automation.Language.ParamBlockAst]}, $true) | Select-Object -First 1
+    
+    # Find the OutCsv parameter
+    $outCsvParam = $paramBlock.Parameters | Where-Object { $_.Name.VariablePath.UserPath -eq 'OutCsv' }
+    
+    # Get the default value expression as a string
+    $defaultValueText = $outCsvParam.DefaultValue.Extent.Text
+    
+    # Verify it uses UserProfile, not MyDocuments
+    $defaultValueText | Should -Match "UserProfile"
+    $defaultValueText | Should -Not -Match "MyDocuments"
+    
+    # Verify it uses 'Logs' folder (plural)
+    $defaultValueText | Should -Match "'Logs'"
+  }
+}
+
 Describe "ConvertTo-CsvValue" {
   It "Returns empty string for null value" {
     ConvertTo-CsvValue $null | Should -Be ''
