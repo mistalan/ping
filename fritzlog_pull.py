@@ -7,6 +7,7 @@ import csv
 import time
 import argparse
 import datetime
+import os
 
 # Import-Pfad je nach fritzconnection-Version:
 try:
@@ -79,7 +80,8 @@ def main():
     ap.add_argument("--user", default=None, help="FRITZ!Box Benutzername (oft None/leer bei älteren Setups)")
     ap.add_argument("--password", required=True, help="FRITZ!Box Passwort")
     ap.add_argument("--interval", type=int, default=30, help="Intervall in Sekunden (default: 30)")
-    ap.add_argument("--out", default=r"C:\Users\AlexB\Ping\Log\fritz_status_log.csv", help="Pfad zur CSV (default: C:\\Users\\AlexB\\Ping\\Log\\fritz_status_log.csv)")
+    default_out = os.path.join(os.path.expanduser("~"), "Ping", "Log", "fritz_status_log.csv")
+    ap.add_argument("--out", default=default_out, help=f"Pfad zur CSV (default: {default_out})")
     args = ap.parse_args()
 
     header = [
@@ -92,6 +94,7 @@ def main():
         "common_bytes_recv",
         "dsl_link_status",
     ]
+    os.makedirs(os.path.dirname(args.out), exist_ok=True)
     ensure_header(args.out, header)
 
     try:
