@@ -9,8 +9,8 @@ $ErrorActionPreference = "Stop"
 New-Item -ItemType Directory -Force -Path (Split-Path $OutCsv) | Out-Null
 
 if (-not (Test-Path $OutCsv)) {
-  "timestamp,adapter,media_status,ipv4,ipv6_enabled,gateway,dns_ok,dns_ms, " + `
-  ($PingTargets | ForEach-Object { "ping_${_}_avg_ms,ping_${_}_loss_pct" }) -join "," | `
+  "timestamp,adapter,media_status,ipv4,ipv6_enabled,gateway,dns_ok,dns_ms," + `
+  (($PingTargets | ForEach-Object { "ping_${_}_avg_ms,ping_${_}_loss_pct" }) -join ",") | `
   Set-Content -Encoding UTF8 $OutCsv
 }
 
