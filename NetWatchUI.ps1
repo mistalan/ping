@@ -22,17 +22,31 @@ $script:IsTracking = $false
 
 # Detect available Python command
 function Get-PythonCommand {
-    # Try python3 first (Linux/WSL style)
-    if (Get-Command "python3" -ErrorAction SilentlyContinue) {
-        return "python3"
+    # Test if a Python command actually works (not just a Windows Store stub)
+    function Test-PythonWorks($cmd) {
+        try {
+            $result = & $cmd --version 2>&1
+            # Check if it's not the Windows Store redirect message
+            if ($result -match "Python \d+\.\d+" -or $result -match "python \d+\.\d+") {
+                return $true
+            }
+            return $false
+        } catch {
+            return $false
+        }
     }
-    # Try python (Windows style)
-    if (Get-Command "python" -ErrorAction SilentlyContinue) {
+
+    # Try python first (most common on Windows)
+    if ((Get-Command "python" -ErrorAction SilentlyContinue) -and (Test-PythonWorks "python")) {
         return "python"
     }
     # Try py launcher (Windows Python launcher)
-    if (Get-Command "py" -ErrorAction SilentlyContinue) {
+    if ((Get-Command "py" -ErrorAction SilentlyContinue) -and (Test-PythonWorks "py")) {
         return "py"
+    }
+    # Try python3 last (Linux/WSL style, often a Store stub on Windows)
+    if ((Get-Command "python3" -ErrorAction SilentlyContinue) -and (Test-PythonWorks "python3")) {
+        return "python3"
     }
     # If none found, default to python and let it fail with a clear error
     return "python"
@@ -560,17 +574,26 @@ $form.Add_FormClosing({
 # Show the form
 $form.Add_Shown({
     $form.Activate()
-    # Check if Python is available
-    if (-not (Get-Command $script:PythonCommand -ErrorAction SilentlyContinue)) {
+    # Check if Python is available and working
+    $pythonWorks = $false
+    try {
+        $result = & $script:PythonCommand --version 2>&1
+        if ($result -match "Python \d+\.\d+" -or $result -match "python \d+\.\d+") {
+            $pythonWorks = $true
+            $logOutput.AppendText("[$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')] Python detected: $($script:PythonCommand) - $result`r`n")
+        }
+    } catch {
+        # Python command failed
+    }
+
+    if (-not $pythonWorks) {
         [System.Windows.Forms.MessageBox]::Show(
-            "Python is not found in your PATH!`n`nPlease install Python and ensure it's accessible via 'python', 'python3', or 'py' command.`n`nFRITZ!Box logging and analysis features will not work without Python.",
+            "Python is not found or not working properly!`n`nPlease install Python from python.org and ensure it's in your PATH.`n`nNote: On Windows, the Microsoft Store 'python3' stub may interfere. Install from python.org instead.`n`nFRITZ!Box logging and analysis features will not work without Python.",
             "Python Not Found",
             [System.Windows.Forms.MessageBoxButtons]::OK,
             [System.Windows.Forms.MessageBoxIcon]::Warning
         )
-        $logOutput.AppendText("[$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')] WARNING: Python not found in PATH. Using default command: $($script:PythonCommand)`r`n")
-    } else {
-        $logOutput.AppendText("[$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')] Python detected: $($script:PythonCommand)`r`n")
+        $logOutput.AppendText("[$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')] WARNING: Python not found or not working. Command tried: $($script:PythonCommand)`r`n")
     }
 })
 [void]$form.ShowDialog()

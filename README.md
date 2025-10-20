@@ -253,8 +253,9 @@ Invoke-Pester .\NetWatch.Tests.ps1
 **NetWatchUI.ps1:**
 - If the UI doesn't start, ensure you're running on Windows with PowerShell 5+ or PowerShell Core 7+
 - If you get execution policy errors, run: `Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser`
-- The UI will automatically detect Python using `python`, `python3`, or `py` commands
-- If Python is not found, you'll see a warning on startup - install Python and ensure it's in your PATH
+- The UI will automatically detect a working Python installation using `python`, `py`, or `python3` commands
+- If Python is not found, you'll see a warning on startup - install Python from python.org and ensure it's in your PATH
+- **Windows Note**: If you see "Python was not found" errors, the Windows Store app alias may be interfering. Install Python from python.org instead.
 - Check the Activity Log in the Control tab for detailed error messages
 
 **NetWatch.ps1:**
