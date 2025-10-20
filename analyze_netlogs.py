@@ -328,7 +328,7 @@ def main():
                     plt.xlabel("Zeit"); plt.ylabel("ms")
                     plt.tight_layout()
                     plt.savefig(f"latency_{t}.png")
-                plt.close()
+                    plt.close()
             print("📈 Plots gespeichert (latency_*.png).")
         except Exception as e:
             print(f"(Plots übersprungen: {e})")
