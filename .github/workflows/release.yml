@@ -17,7 +17,7 @@ permissions:
 jobs:
   create-release:
     name: Create Release
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -26,17 +26,19 @@ jobs:
 
       - name: Set version
         id: version
+        shell: pwsh
         run: |
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            echo "version=${{ inputs.version }}" >> $GITHUB_OUTPUT
-          else
-            echo "version=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
-          fi
+          if ("${{ github.event_name }}" -eq "workflow_dispatch") {
+            "version=${{ inputs.version }}" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+          } else {
+            $tag = "${{ github.ref }}" -replace '^refs/tags/', ''
+            "version=$tag" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+          }
 
       - name: Install PowerShell
-        shell: bash
+        shell: pwsh
         run: |
-          pwsh --version
+          $PSVersionTable.PSVersion
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -66,18 +68,19 @@ jobs:
           python -c "import analyze_netlogs"
 
       - name: Create release package
+        shell: pwsh
         run: |
-          mkdir -p release
-          cp NetWatch.ps1 release/
-          cp fritzlog_pull.py release/
-          cp analyze_netlogs.py release/
-          cp README.md release/
+          New-Item -ItemType Directory -Force -Path release | Out-Null
+          Copy-Item NetWatch.ps1 release/
+          Copy-Item fritzlog_pull.py release/
+          Copy-Item analyze_netlogs.py release/
+          Copy-Item README.md release/
           
           # Create a requirements.txt for Python dependencies
-          echo "fritzconnection>=1.15.0" > release/requirements.txt
+          "fritzconnection>=1.15.0" | Out-File -FilePath release/requirements.txt -Encoding utf8
           
           # Create installation guide
-          cat > release/INSTALL.md << 'EOF'
+          @'
           # Installation Guide
           
           ## Prerequisites
@@ -87,7 +90,7 @@ jobs:
           - Administrator privileges recommended
           
           ### For Python Scripts
-          - Python 3.10 or higher
+          - Python 3.12 or higher
           
           ## Installation Steps
           
@@ -100,35 +103,37 @@ jobs:
           
           3. Run the scripts as needed:
              - Windows: `.\NetWatch.ps1`
-             - Linux/Mac: `python3 fritzlog_pull.py --password YOUR_PASSWORD`
+             - FRITZ!Box Logger: `python3 fritzlog_pull.py --password YOUR_PASSWORD`
              - Analysis: `python3 analyze_netlogs.py --netwatch LOG1.csv --fritz LOG2.csv`
           
           For detailed usage instructions, see README.md
-          EOF
+          '@ | Out-File -FilePath release/INSTALL.md -Encoding utf8
 
       - name: Create ZIP archive
+        shell: pwsh
         run: |
-          cd release
-          zip -r ../ping-${{ steps.version.outputs.version }}.zip .
-          cd ..
+          Compress-Archive -Path release\* -DestinationPath "ping-${{ steps.version.outputs.version }}.zip"
 
       - name: Create tarball
+        shell: bash
         run: |
           cd release
           tar -czf ../ping-${{ steps.version.outputs.version }}.tar.gz .
           cd ..
 
       - name: Generate checksums
+        shell: pwsh
         run: |
-          sha256sum ping-${{ steps.version.outputs.version }}.zip > checksums.txt
-          sha256sum ping-${{ steps.version.outputs.version }}.tar.gz >> checksums.txt
+          (Get-FileHash "ping-${{ steps.version.outputs.version }}.zip" -Algorithm SHA256).Hash.ToLower() + "  ping-${{ steps.version.outputs.version }}.zip" | Out-File -FilePath checksums.txt -Encoding utf8
+          (Get-FileHash "ping-${{ steps.version.outputs.version }}.tar.gz" -Algorithm SHA256).Hash.ToLower() + "  ping-${{ steps.version.outputs.version }}.tar.gz" | Out-File -FilePath checksums.txt -Append -Encoding utf8
 
       - name: Generate release notes
         id: release_notes
+        shell: pwsh
         run: |
-          VERSION="${{ steps.version.outputs.version }}"
+          $VERSION = "${{ steps.version.outputs.version }}"
           
-          cat > release_notes.md << 'EOF'
+          @'
           ## Network Monitoring Tools Release
           
           This release includes the complete network monitoring toolkit:
@@ -149,7 +154,7 @@ jobs:
           - Windows OS (uses Windows-specific cmdlets)
           
           **For Python scripts:**
-          - Python 3.10 or higher
+          - Python 3.12 or higher
           - Dependencies: `fritzconnection` (install via `pip install -r requirements.txt`)
           
           ### Quick Start
@@ -173,11 +178,11 @@ jobs:
           Verify your download using SHA256:
           
           ```
-          EOF
+          '@ | Out-File -FilePath release_notes.md -Encoding utf8
           
-          cat checksums.txt >> release_notes.md
+          Get-Content checksums.txt | Out-File -FilePath release_notes.md -Append -Encoding utf8
           
-          echo '```' >> release_notes.md
+          "`n``````" | Out-File -FilePath release_notes.md -Append -Encoding utf8
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1

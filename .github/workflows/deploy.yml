@@ -11,7 +11,7 @@ permissions:
 jobs:
   package:
     name: Package Scripts
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -33,10 +33,6 @@ jobs:
           python -c "import fritzlog_pull"
           python -c "import analyze_netlogs"
 
-      - name: Install PowerShell
-        run: |
-          pwsh --version
-
       - name: Validate PowerShell script
         shell: pwsh
         run: |
@@ -47,20 +43,21 @@ jobs:
           }
 
       - name: Create deployment package
+        shell: pwsh
         run: |
-          mkdir -p package
+          New-Item -ItemType Directory -Force -Path package | Out-Null
           
           # Copy scripts
-          cp NetWatch.ps1 package/
-          cp fritzlog_pull.py package/
-          cp analyze_netlogs.py package/
-          cp README.md package/
+          Copy-Item NetWatch.ps1 package/
+          Copy-Item fritzlog_pull.py package/
+          Copy-Item analyze_netlogs.py package/
+          Copy-Item README.md package/
           
           # Create requirements.txt
-          echo "fritzconnection>=1.15.0" > package/requirements.txt
+          "fritzconnection>=1.15.0" | Out-File -FilePath package/requirements.txt -Encoding utf8
           
           # Create quick start guide
-          cat > package/QUICKSTART.md << 'EOF'
+          @'
           # Quick Start Guide
           
           ## Windows Network Monitor
@@ -94,36 +91,38 @@ jobs:
           ## Need Help?
           
           See README.md for complete documentation.
-          EOF
+          '@ | Out-File -FilePath package/QUICKSTART.md -Encoding utf8
 
       - name: Generate package metadata
+        shell: pwsh
         run: |
-          cat > package/PACKAGE_INFO.txt << EOF
+          @"
           Package: ping network monitoring tools
-          Build Date: $(date -u +"%Y-%m-%d %H:%M:%S UTC")
+          Build Date: $((Get-Date).ToUniversalTime().ToString("yyyy-MM-dd HH:mm:ss UTC"))
           Git Commit: ${{ github.sha }}
           Git Branch: ${{ github.ref_name }}
           Build Number: ${{ github.run_number }}
           Build ID: ${{ github.run_id }}
-          EOF
+          "@ | Out-File -FilePath package\PACKAGE_INFO.txt -Encoding utf8
 
       - name: Create ZIP archive
+        shell: pwsh
         run: |
-          cd package
-          zip -r ../ping-latest.zip .
-          cd ..
+          Compress-Archive -Path package\* -DestinationPath ping-latest.zip
 
       - name: Create tarball
+        shell: bash
         run: |
           cd package
           tar -czf ../ping-latest.tar.gz .
           cd ..
 
       - name: Generate checksums
+        shell: pwsh
         run: |
-          sha256sum ping-latest.zip > checksums-latest.txt
-          sha256sum ping-latest.tar.gz >> checksums-latest.txt
-          cat checksums-latest.txt
+          (Get-FileHash ping-latest.zip -Algorithm SHA256).Hash.ToLower() + "  ping-latest.zip" | Out-File -FilePath checksums-latest.txt -Encoding utf8
+          (Get-FileHash ping-latest.tar.gz -Algorithm SHA256).Hash.ToLower() + "  ping-latest.tar.gz" | Out-File -FilePath checksums-latest.txt -Append -Encoding utf8
+          Get-Content checksums-latest.txt
 
       - name: Upload ZIP artifact
         uses: actions/upload-artifact@v4
@@ -147,23 +146,24 @@ jobs:
           retention-days: 90
 
       - name: Summary
+        shell: pwsh
         run: |
-          echo "### 📦 Deployment Package Created" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Build Information:**" >> $GITHUB_STEP_SUMMARY
-          echo "- Commit: \`${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY
-          echo "- Branch: \`${{ github.ref_name }}\`" >> $GITHUB_STEP_SUMMARY
-          echo "- Run: #${{ github.run_number }}" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Package Contents:**" >> $GITHUB_STEP_SUMMARY
-          echo "- NetWatch.ps1" >> $GITHUB_STEP_SUMMARY
-          echo "- fritzlog_pull.py" >> $GITHUB_STEP_SUMMARY
-          echo "- analyze_netlogs.py" >> $GITHUB_STEP_SUMMARY
-          echo "- README.md" >> $GITHUB_STEP_SUMMARY
-          echo "- requirements.txt" >> $GITHUB_STEP_SUMMARY
-          echo "- QUICKSTART.md" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Checksums:**" >> $GITHUB_STEP_SUMMARY
-          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
-          cat checksums-latest.txt >> $GITHUB_STEP_SUMMARY
-          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value "### 📦 Deployment Package Created"
+          Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value ""
+          Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value "**Build Information:**"
+          Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value "- Commit: ``${{ github.sha }}``"
+          Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value "- Branch: ``${{ github.ref_name }}``"
+          Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value "- Run: #${{ github.run_number }}"
+          Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value ""
+          Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value "**Package Contents:**"
+          Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value "- NetWatch.ps1"
+          Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value "- fritzlog_pull.py"
+          Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value "- analyze_netlogs.py"
+          Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value "- README.md"
+          Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value "- requirements.txt"
+          Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value "- QUICKSTART.md"
+          Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value ""
+          Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value "**Checksums:**"
+          Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value '```'
+          Get-Content checksums-latest.txt | ForEach-Object { Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value $_ }
+          Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value '```'

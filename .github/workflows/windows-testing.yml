@@ -1,4 +1,4 @@
-name: Multi-Platform Testing
+name: Windows Testing
 
 on:
   push:
@@ -13,23 +13,13 @@ permissions:
   contents: read
 
 jobs:
-  test-powershell-cross-platform:
-    name: Test PowerShell on ${{ matrix.os }}
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
+  test-powershell-windows:
+    name: Test PowerShell on Windows
+    runs-on: windows-latest
     
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-
-      - name: Install PowerShell (Linux/macOS)
-        if: runner.os != 'Windows'
-        shell: bash
-        run: |
-          pwsh --version || echo "PowerShell not pre-installed"
 
       - name: Install PowerShell modules
         shell: pwsh
@@ -43,7 +33,7 @@ jobs:
         run: |
           $ast = [System.Management.Automation.Language.Parser]::ParseFile("./NetWatch.ps1", [ref]$null, [ref]$null)
           if ($ast) {
-            Write-Host "✓ Syntax validation passed on ${{ matrix.os }}"
+            Write-Host "✓ Syntax validation passed on Windows"
           } else {
             Write-Error "Syntax validation failed"
             exit 1
@@ -58,23 +48,18 @@ jobs:
           $config.Output.Verbosity = 'Detailed'
           Invoke-Pester -Configuration $config
 
-  test-python-versions:
-    name: Test Python ${{ matrix.python-version }} on ${{ matrix.os }}
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
-        python-version: ['3.10', '3.11', '3.12']
+  test-python-windows:
+    name: Test Python 3.12 on Windows
+    runs-on: windows-latest
     
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up Python ${{ matrix.python-version }}
+      - name: Set up Python 3.12
         uses: actions/setup-python@v5
         with:
-          python-version: ${{ matrix.python-version }}
+          python-version: '3.12'
 
       - name: Install dependencies
         run: |
@@ -95,8 +80,8 @@ jobs:
 
   integration-test:
     name: Integration Test
-    runs-on: ubuntu-latest
-    needs: [test-powershell-cross-platform, test-python-versions]
+    runs-on: windows-latest
+    needs: [test-powershell-windows, test-python-windows]
     
     steps:
       - name: Checkout code
@@ -122,8 +107,8 @@ jobs:
           echo "Testing Python scripts..."
           python -m py_compile fritzlog_pull.py
           python -m py_compile analyze_netlogs.py
-          python fritzlog_pull.py --help > /dev/null
-          python analyze_netlogs.py --help > /dev/null
+          python fritzlog_pull.py --help
+          python analyze_netlogs.py --help
           echo "✓ Python validations passed"
 
       - name: Run PowerShell tests
@@ -138,10 +123,10 @@ jobs:
           Write-Host "✓ PowerShell tests passed"
 
       - name: Summary
+        shell: pwsh
         run: |
-          echo "### ✅ Integration Tests Passed" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "All scripts validated successfully across:" >> $GITHUB_STEP_SUMMARY
-          echo "- Python 3.10, 3.11, 3.12" >> $GITHUB_STEP_SUMMARY
-          echo "- Ubuntu, Windows, macOS" >> $GITHUB_STEP_SUMMARY
-          echo "- PowerShell syntax and tests" >> $GITHUB_STEP_SUMMARY
+          Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value "### ✅ Integration Tests Passed"
+          Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value ""
+          Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value "All scripts validated successfully on Windows:"
+          Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value "- Python 3.12"
+          Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value "- PowerShell syntax and tests"
