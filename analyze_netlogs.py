@@ -245,7 +245,8 @@ def load_csv(path, time_col="timestamp"):
                 if time_col in r:
                     r[time_col] = parse_time(r[time_col])
                 rows.append(r)
-        return rows, reader.fieldnames
+            fieldnames = reader.fieldnames
+        return rows, fieldnames
     else:
         df = pd.read_csv(path, encoding="utf-8")
         if time_col in df.columns:
@@ -253,12 +254,6 @@ def load_csv(path, time_col="timestamp"):
         # drop rows ohne Zeit
         df = df.dropna(subset=[time_col]).copy()
         return df, list(df.columns)
-
-def to_dataframe(rows, columns):
-    if pd is None:
-        return rows  # Fallback: rohes Array
-    else:
-        return pd.DataFrame(rows, columns=columns)
 
 def main():
     ap = argparse.ArgumentParser(description="Analyze NetWatch + FRITZ!Box CSV logs and detect incidents.")
@@ -279,24 +274,21 @@ def main():
         df_nw = nw if isinstance(nw, pd.DataFrame) else pd.DataFrame(nw)
         df_fr = fr if isinstance(fr, pd.DataFrame) else pd.DataFrame(fr)
     else:
-        print("Hinweis: pandas nicht installiert – einfache Auswertung ohne Plots.")
-        df_nw = to_dataframe(nw, None)
-        df_fr = to_dataframe(fr, None)
+        print("Hinweis: pandas nicht installiert")
 
     # Sortieren
     if pd is not None:
         df_nw = df_nw.sort_values("timestamp").reset_index(drop=True)
         df_fr = df_fr.sort_values("timestamp").reset_index(drop=True)
     else:
-        df_nw.sort(key=lambda r: r["timestamp"])
-        df_fr.sort(key=lambda r: r["timestamp"])
+        print("Hinweis: pandas nicht installiert")
 
     # Detektion
     inc_nw = detect_netwatch_incidents(df_nw, args.latency, args.loss)
     inc_fr = detect_fritz_incidents(df_fr)
     incidents = inc_nw + inc_fr
-    incidents = sorted(incidents, key=lambda x: x["start"])
-
+    df_nw = sorted(df_nw, key=lambda r: r["timestamp"])
+    df_fr = sorted(df_fr, key=lambda r: r["timestamp"])
     # Bursts aggregieren
     incidents = aggregate_bursts(incidents)
 
@@ -337,7 +329,7 @@ def main():
                     plt.xlabel("Zeit"); plt.ylabel("ms")
                     plt.tight_layout()
                     plt.savefig(f"latency_{t}.png")
-            plt.close('all')
+            plt.close()
             print("📈 Plots gespeichert (latency_*.png).")
         except Exception as e:
             print(f"(Plots übersprungen: {e})")
