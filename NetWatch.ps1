@@ -34,7 +34,9 @@ while ($true) {
     # aktiver Up-Adapter (kein vEthernet etc.)
     $adapter = Get-NetAdapter | Where-Object { $_.Status -eq 'Up' -and $_.HardwareInterface -eq $true } | Sort-Object -Property ifIndex | Select-Object -First 1
     $media = $adapter.MediaConnectionState
-    $ipv4 = (Get-NetIPAddress -InterfaceIndex $adapter.ifIndex -AddressFamily IPv4 -ErrorAction SilentlyContinue | Where-Object {$_.PrefixOrigin -ne "WellKnown"} | Select-Object -ExpandProperty IPAddress -First 1)
+    $ipv4Addresses = Get-NetIPAddress -InterfaceIndex $adapter.ifIndex -AddressFamily IPv4 -ErrorAction SilentlyContinue
+    $filteredIpv4 = $ipv4Addresses | Where-Object { $_.PrefixOrigin -ne "WellKnown" }
+    $ipv4 = $filteredIpv4 | Select-Object -ExpandProperty IPAddress -First 1
     $ipv6Enabled = (Get-NetAdapterBinding -InterfaceDescription $adapter.InterfaceDescription -ComponentID ms_tcpip6).Enabled
     $gw = (Get-NetRoute -InterfaceIndex $adapter.ifIndex -DestinationPrefix "0.0.0.0/0" -ErrorAction SilentlyContinue | Sort-Object RouteMetric | Select-Object -ExpandProperty NextHop -First 1)
 
