@@ -261,7 +261,7 @@ def main():
     ap.add_argument("--fritz", required=True, help="Pfad zu fritz_status_log.csv")
     ap.add_argument("--out", default="incidents.csv", help="Ausgabe-CSV für Incidents")
     ap.add_argument("--latency", type=float, default=DEFAULT_LATENCY_SPIKE_MS, help="Latency-Spike-Schwelle in ms (default 20)")
-    ap.add_argument("--loss", type=float, default=DEFAULT_LOSS_SPIKE_PCT, help="Loss-Spike-Schwelle in % (default 1.0)")
+    ap.add_argument("--loss", type=float, default=DEFAULT_LOSS_SPIKE_PCT, help="Loss-Spike-Schwelle in %% (default 1.0)")
     ap.add_argument("--plots", action="store_true", help="Einfache Plots erstellen (benötigt matplotlib+pandas)")
     args = ap.parse_args()
 
