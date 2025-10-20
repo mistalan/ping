@@ -134,7 +134,7 @@ jobs:
 
   security-scan:
     name: Security Scan
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -160,11 +160,15 @@ jobs:
     if: always()
     steps:
       - name: Check all jobs
+        shell: pwsh
         run: |
-          if [ "${{ needs.validate-powershell.result }}" != "success" ] || \
-             [ "${{ needs.validate-python.result }}" != "success" ] || \
-             [ "${{ needs.lint-python.result }}" != "success" ]; then
-            echo "❌ Some checks failed"
+          $failed = $false
+          if ("${{ needs.validate-powershell.result }}" -ne "success") { $failed = $true }
+          if ("${{ needs.validate-python.result }}" -ne "success") { $failed = $true }
+          if ("${{ needs.lint-python.result }}" -ne "success") { $failed = $true }
+          
+          if ($failed) {
+            Write-Host "❌ Some checks failed"
             exit 1
-          fi
-          echo "✅ All checks passed successfully"
+          }
+          Write-Host "✅ All checks passed successfully"
