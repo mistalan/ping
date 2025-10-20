@@ -79,7 +79,7 @@ def main():
     ap.add_argument("--user", default=None, help="FRITZ!Box Benutzername (oft None/leer bei älteren Setups)")
     ap.add_argument("--password", required=True, help="FRITZ!Box Passwort")
     ap.add_argument("--interval", type=int, default=30, help="Intervall in Sekunden (default: 30)")
-    ap.add_argument("--out", default=r"C:\Users\AlexB\Ping\Log\fritz_status_log.csv", help="Pfad zur CSV (default: C:\\Users\\AlexB\\Ping\Log\fritz_status_logfritz_status_log.csv)")
+    ap.add_argument("--out", default=r"C:\Users\AlexB\Ping\Log\fritz_status_log.csv", help="Pfad zur CSV (default: C:\\Users\\AlexB\\Ping\\Log\\fritz_status_log.csv)")
     args = ap.parse_args()
 
     header = [
