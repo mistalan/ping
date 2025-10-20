@@ -20,7 +20,7 @@ A comprehensive GitHub Actions CI/CD pipeline has been successfully implemented 
   - Pester unit tests with detailed output
   - Test results uploaded as artifacts
 
-- **Python Validation** (Matrix: 3.10, 3.11, 3.12)
+- **Python Validation** (Matrix: 3.12)
   - Syntax compilation checks
   - Import validation
   - CLI help command tests
@@ -111,7 +111,7 @@ git push origin v1.0.0
 - Results uploaded to GitHub Security tab
 - Automatic vulnerability detection
 
-### 5. Multi-Platform Testing - `.github/workflows/multi-platform.yml`
+### 5. Windows Testing - `.github/workflows/windows-testing.yml`
 
 **Triggers:**
 - Push to main/master
@@ -120,11 +120,11 @@ git push origin v1.0.0
 - Manual workflow dispatch
 
 **Features:**
-- **PowerShell Cross-Platform** (Ubuntu, Windows, macOS)
+- **PowerShell Cross-Platform** (Windows)
   - Syntax validation on all platforms
   - Pester tests on all platforms
   
-- **Python Version Matrix** (3.10, 3.11, 3.12 × Ubuntu, Windows, macOS)
+- **Python Version Matrix** (3.12 × Windows)
   - 9 test combinations total
   - Validates compatibility across platforms and versions
 

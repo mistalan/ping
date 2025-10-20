@@ -25,7 +25,7 @@ After merging this PR, verify that the CI/CD pipeline is working correctly.
   - Deploy
   - Release
   - CodeQL Security Analysis
-  - Multi-Platform Testing
+  - Windows Testing
 
 ## Test CI Workflow (Automatic on Merge)
 
@@ -36,7 +36,7 @@ The CI workflow should run automatically when this PR is merged.
 - [ ] Wait for completion (~3-5 minutes)
 - [ ] Verify all jobs pass:
   - [ ] validate-powershell
-  - [ ] validate-python (3 jobs: 3.10, 3.11, 3.12)
+  - [ ] validate-python (3 jobs: 3.12)
   - [ ] lint-python
   - [ ] security-scan
   - [ ] all-checks-complete
@@ -72,13 +72,13 @@ The Deploy workflow should also run automatically.
 
 This workflow tests on multiple platforms. Trigger it manually first:
 
-- [ ] Go to Actions → Multi-Platform Testing
+- [ ] Go to Actions → Windows Testing
 - [ ] Click "Run workflow"
 - [ ] Select branch: main
 - [ ] Click "Run workflow" button
 - [ ] Wait for completion (~10-15 minutes)
 - [ ] Verify all jobs pass:
-  - [ ] test-powershell-cross-platform (3 jobs: Ubuntu, Windows, macOS)
+  - [ ] test-powershell-cross-platform (3 jobs: Windows)
   - [ ] test-python-versions (9 jobs: 3 OS × 3 Python versions)
   - [ ] integration-test
 

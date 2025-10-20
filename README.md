@@ -3,6 +3,7 @@
 [![CI](https://github.com/mistalan/ping/actions/workflows/ci.yml/badge.svg)](https://github.com/mistalan/ping/actions/workflows/ci.yml)
 [![Deploy](https://github.com/mistalan/ping/actions/workflows/deploy.yml/badge.svg)](https://github.com/mistalan/ping/actions/workflows/deploy.yml)
 [![CodeQL](https://github.com/mistalan/ping/actions/workflows/codeql.yml/badge.svg)](https://github.com/mistalan/ping/actions/workflows/codeql.yml)
+[![Windows Testing](https://github.com/mistalan/ping/actions/workflows/windows-testing.yml/badge.svg)](https://github.com/mistalan/ping/actions/workflows/windows-testing.yml)
 
 Network monitoring and diagnostics toolkit for discovering ping problems, analyzing disconnects, and logging network status.
 
@@ -218,8 +219,8 @@ This repository includes a comprehensive GitHub Actions pipeline for continuous 
 
 - **Continuous Integration**: Automated testing on every push and pull request
   - PowerShell validation with PSScriptAnalyzer and Pester tests
-  - Python validation across versions 3.10, 3.11, and 3.12
-  - Multi-platform testing (Ubuntu, Windows, macOS)
+  - Python 3.12 validation and testing
+  - Windows-only testing (optimized for target platform)
   - Security scanning with CodeQL and Trivy
 
 - **Automated Deployment**: Package scripts automatically on every push to main

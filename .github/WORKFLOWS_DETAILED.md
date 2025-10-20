@@ -63,7 +63,7 @@
    - Pester tests
    - Test results artifact
 
-2. `validate-python` - Python validation (matrix: 3.10, 3.11, 3.12)
+2. `validate-python` - Python validation (matrix: 3.12)
    - Syntax compilation
    - Import checks
    - CLI help tests
@@ -117,11 +117,11 @@
    - Run security & quality queries
    - Upload results to Security tab
 
-### Multi-Platform Testing Workflow
+### Windows Testing Workflow
 
 **Jobs:**
 1. `test-powershell-cross-platform` - PowerShell tests
-   - Matrix: Ubuntu, Windows, macOS
+   - Matrix: Windows
    - Install PowerShell modules
    - Validate syntax
    - Run Pester tests

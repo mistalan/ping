@@ -7,23 +7,25 @@ This repository uses GitHub Actions for continuous integration, deployment, and 
 [![CI](https://github.com/mistalan/ping/actions/workflows/ci.yml/badge.svg)](https://github.com/mistalan/ping/actions/workflows/ci.yml)
 [![Deploy](https://github.com/mistalan/ping/actions/workflows/deploy.yml/badge.svg)](https://github.com/mistalan/ping/actions/workflows/deploy.yml)
 [![CodeQL](https://github.com/mistalan/ping/actions/workflows/codeql.yml/badge.svg)](https://github.com/mistalan/ping/actions/workflows/codeql.yml)
-[![Multi-Platform Testing](https://github.com/mistalan/ping/actions/workflows/multi-platform.yml/badge.svg)](https://github.com/mistalan/ping/actions/workflows/multi-platform.yml)
+[![Windows Testing](https://github.com/mistalan/ping/actions/workflows/windows-testing.yml/badge.svg)](https://github.com/mistalan/ping/actions/workflows/windows-testing.yml)
 
 ## Available Workflows
 
 ### CI (Continuous Integration)
 - **Trigger**: Push to main/master, Pull Requests
+- **Platform**: Windows only
 - **Purpose**: Validates code quality and runs tests
 - **Jobs**:
   - PowerShell syntax validation and linting with PSScriptAnalyzer
   - Pester unit tests for NetWatch.ps1
-  - Python syntax validation (3.10, 3.11, 3.12)
+  - Python 3.12 validation
   - Python imports and CLI tests
   - Python linting with flake8
   - Security scanning with Trivy
 
 ### Deploy
 - **Trigger**: Push to main/master, Manual
+- **Platform**: Windows only
 - **Purpose**: Creates deployment packages with latest code
 - **Artifacts**:
   - `ping-latest.zip` - Complete package (ZIP format)
@@ -33,6 +35,7 @@ This repository uses GitHub Actions for continuous integration, deployment, and 
 
 ### Release
 - **Trigger**: Git tags matching `v*.*.*` (e.g., v1.0.0), Manual
+- **Platform**: Windows only
 - **Purpose**: Creates official releases with versioned packages
 - **Features**:
   - Runs full test suite before release
@@ -47,13 +50,14 @@ This repository uses GitHub Actions for continuous integration, deployment, and 
 - **Language**: Python
 - **Queries**: Security and quality rules
 
-### Multi-Platform Testing
+### Windows Testing
 - **Trigger**: Push to main/master, Pull Requests, Daily schedule, Manual
-- **Purpose**: Tests scripts across different platforms and versions
-- **Matrix**:
-  - OS: Ubuntu, Windows, macOS
-  - Python: 3.10, 3.11, 3.12
-  - PowerShell on all platforms
+- **Platform**: Windows only
+- **Purpose**: Tests scripts on Windows with Python 3.12
+- **Tests**:
+  - PowerShell syntax and Pester tests
+  - Python 3.12 validation
+  - Integration testing
 
 ## Using the Workflows
 
@@ -140,11 +144,8 @@ All dependencies are automatically kept up to date by Dependabot.
 
 ## Troubleshooting
 
-### Workflow Fails on PowerShell Tests (Linux/macOS)
-This is expected if tests use Windows-specific cmdlets. The workflow validates syntax only on non-Windows platforms.
-
 ### Python Version Compatibility
-The scripts require Python 3.10+ due to type hint syntax (`str | None`). Workflows test on 3.10, 3.11, and 3.12.
+The scripts require Python 3.12. All workflows are optimized for Windows with Python 3.12.
 
 ### Artifact Download Issues
 Artifacts from the Deploy workflow expire after 90 days. For permanent downloads, use Releases instead.
