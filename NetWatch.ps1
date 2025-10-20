@@ -13,7 +13,7 @@ function ConvertTo-CsvValue($value) {
   if ($null -eq $value) {
     return ''
   }
-  # Check if it's explicitly an empty string (not 0, not $false)
+  # Check if it's explicitly an empty string (numeric 0 and $false are converted to strings)
   if ($value -is [string] -and $value -eq '') {
     return ''
   }

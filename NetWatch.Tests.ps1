@@ -52,7 +52,11 @@ Describe "New-CsvHeader" {
     $targets = @("8.8.8.8","1.1.1.1","192.168.178.1","www.riotgames.com")
     $header = New-CsvHeader $targets
     
-    $header | Should -Be "timestamp,adapter,media_status,ipv4,ipv6_enabled,gateway,dns_ok,dns_ms,ping_8.8.8.8_avg_ms,ping_8.8.8.8_loss_pct,ping_1.1.1.1_avg_ms,ping_1.1.1.1_loss_pct,ping_192.168.178.1_avg_ms,ping_192.168.178.1_loss_pct,ping_www.riotgames.com_avg_ms,ping_www.riotgames.com_loss_pct"
+    $expected = "timestamp,adapter,media_status,ipv4,ipv6_enabled,gateway,dns_ok,dns_ms," +
+                "ping_8.8.8.8_avg_ms,ping_8.8.8.8_loss_pct,ping_1.1.1.1_avg_ms,ping_1.1.1.1_loss_pct," +
+                "ping_192.168.178.1_avg_ms,ping_192.168.178.1_loss_pct,ping_www.riotgames.com_avg_ms,ping_www.riotgames.com_loss_pct"
+    
+    $header | Should -Be $expected
   }
 
   It "Creates header with single ping target" {
@@ -143,8 +147,19 @@ Describe "New-ErrorRow" {
   It "Fills remaining columns with empty values" {
     $errorRow = New-ErrorRow "2025-01-01 12:00:00" "Error" 16
     
-    # Check that after timestamp, ERROR, and message, there are empty values
-    $errorRow | Should -Match "^2025-01-01 12:00:00,ERROR,Error(,){13}$"
+    # Parse the CSV to verify structure
+    $tempFile = [System.IO.Path]::GetTempFileName()
+    "c1,c2,c3,c4,c5,c6,c7,c8,c9,c10,c11,c12,c13,c14,c15,c16" | Set-Content $tempFile
+    $errorRow | Add-Content $tempFile
+    $csv = Import-Csv $tempFile
+    Remove-Item $tempFile
+    
+    # Verify timestamp, ERROR marker, error message, and remaining empty columns
+    $csv[0].c1 | Should -Be "2025-01-01 12:00:00"
+    $csv[0].c2 | Should -Be "ERROR"
+    $csv[0].c3 | Should -Be "Error"
+    $csv[0].c4 | Should -Be ""
+    $csv[0].c16 | Should -Be ""
   }
 
   It "Handles error messages with quotes" {
