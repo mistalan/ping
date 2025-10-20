@@ -4,11 +4,12 @@ Network monitoring and diagnostics toolkit for discovering ping problems, analyz
 
 ## Overview
 
-This repository provides three complementary tools for comprehensive network monitoring:
+This repository provides three complementary tools for comprehensive network monitoring, plus a simple GUI for easy control:
 
 1. **NetWatch.ps1** - Windows PowerShell script for continuous network monitoring (ping, DNS, adapter status)
 2. **fritzlog_pull.py** - Python script for logging FRITZ!Box router status via TR-064 API
 3. **analyze_netlogs.py** - Python script for analyzing collected logs and detecting network incidents
+4. **NetWatchUI.ps1** - Windows Forms GUI for configuring, starting, stopping, and analyzing network monitoring
 
 ## Prerequisites
 
@@ -40,6 +41,37 @@ pip install pandas matplotlib
 The PowerShell script can be run directly without installation.
 
 ## Usage
+
+### NetWatchUI.ps1 - GUI Control Panel (Recommended)
+
+The easiest way to use the network monitoring tools is through the graphical user interface.
+
+**Launch the UI:**
+```powershell
+.\NetWatchUI.ps1
+```
+
+**Features:**
+- **Configuration Tab**: Set all parameters for NetWatch, FRITZ!Box logging, and analysis
+  - Configure monitoring interval, output paths, and ping targets
+  - Set FRITZ!Box credentials and connection settings
+  - Define analysis thresholds for latency and packet loss
+- **Control Tab**: Start, stop, and analyze monitoring
+  - Start/Stop tracking with a single button click
+  - View real-time activity log
+  - Run log analysis and generate incident reports
+  - Quick access to log folder
+
+**Quick Start:**
+1. Launch `NetWatchUI.ps1`
+2. Go to the Configuration tab and adjust settings (or use defaults)
+3. Switch to the Control tab
+4. Click "Start Tracking" to begin monitoring
+5. Let it run for a while to collect data
+6. Click "Stop Tracking" when done
+7. Click "Analyze Logs" to generate incident reports
+
+The UI runs both NetWatch.ps1 and fritzlog_pull.py in the background and provides a convenient way to control them without using the command line.
 
 ### NetWatch.ps1 - Network Monitor
 
@@ -144,7 +176,28 @@ CSV file with columns: source (PC/FRITZ), type (incident type), start, end, dura
 
 The script also prints a summary of detected incidents to the console and optionally generates latency plots for each ping target.
 
-## Example Workflow
+## Example Workflows
+
+### Using the GUI (Recommended)
+
+1. Launch the UI:
+   ```powershell
+   .\NetWatchUI.ps1
+   ```
+
+2. Configure settings in the Configuration tab (or use defaults)
+
+3. Click "Start Tracking" in the Control tab
+
+4. Let it run for a period of time (hours or days) to collect data
+
+5. Click "Stop Tracking" when done
+
+6. Click "Analyze Logs" to generate incident reports
+
+7. Review the generated incidents.csv and optional plots
+
+### Using Command Line
 
 1. Start network monitoring on your PC:
    ```powershell
@@ -178,6 +231,7 @@ Invoke-Pester .\NetWatch.Tests.ps1
 
 ## File Descriptions
 
+- **NetWatchUI.ps1** - Windows Forms GUI for controlling all monitoring tools
 - **NetWatch.ps1** - PowerShell network monitoring script with CSV logging
 - **NetWatch.Tests.ps1** - Pester unit tests for NetWatch.ps1 functions
 - **fritzlog_pull.py** - FRITZ!Box TR-064 API logger
@@ -186,13 +240,21 @@ Invoke-Pester .\NetWatch.Tests.ps1
 
 ## Tips
 
+- Use the GUI (NetWatchUI.ps1) for the easiest experience - no need to remember command-line parameters
 - Run NetWatch.ps1 continuously in the background to build a historical network quality baseline
-- Use Task Scheduler (Windows) or systemd (Linux with WSL) to run scripts automatically at system startup
-- Adjust thresholds in analyze_netlogs.py based on your network quality expectations
+- Use Task Scheduler (Windows) to run NetWatchUI.ps1 or the individual scripts automatically at system startup
+- Adjust thresholds in the GUI's Configuration tab or in analyze_netlogs.py based on your network quality expectations
 - Default ping targets include Google DNS (8.8.8.8), Cloudflare DNS (1.1.1.1), your router (192.168.178.1), and a game server (www.riotgames.com) - customize as needed
 - CSV logs can be imported into Excel or other analysis tools for custom visualizations
+- If you don't have a FRITZ!Box, simply uncheck "Enable FRITZ!Box logging" in the UI
 
 ## Troubleshooting
+
+**NetWatchUI.ps1:**
+- If the UI doesn't start, ensure you're running on Windows with PowerShell 5+ or PowerShell Core 7+
+- If you get execution policy errors, run: `Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser`
+- Make sure python3 is in your PATH for FRITZ!Box logging and analysis to work
+- Check the Activity Log in the Control tab for detailed error messages
 
 **NetWatch.ps1:**
 - If you get permission errors, run PowerShell as Administrator
