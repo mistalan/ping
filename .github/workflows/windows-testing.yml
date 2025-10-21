@@ -24,14 +24,38 @@ jobs:
       - name: Install PowerShell modules
         shell: pwsh
         run: |
+          Write-Host "==> Installing PowerShell modules..."
           Set-PSRepository PSGallery -InstallationPolicy Trusted
+          
+          Write-Host "==> Installing PSScriptAnalyzer..."
           Install-Module -Name PSScriptAnalyzer -Force -Scope CurrentUser -SkipPublisherCheck
+          
+          Write-Host "==> Installing Pester..."
           Install-Module -Name Pester -Force -Scope CurrentUser -SkipPublisherCheck
+          
+          Write-Host "==> Installed modules:"
+          Get-Module -ListAvailable PSScriptAnalyzer, Pester | Select-Object Name, Version | Format-Table
 
       - name: Validate syntax
         shell: pwsh
         run: |
-          $ast = [System.Management.Automation.Language.Parser]::ParseFile("./NetWatch.ps1", [ref]$null, [ref]$null)
+          Write-Host "==> Validating PowerShell syntax..."
+          Write-Host "Current directory: $PWD"
+          
+          if (-not (Test-Path "./NetWatch.ps1")) {
+            Write-Error "NetWatch.ps1 not found!"
+            exit 1
+          }
+          
+          $errors = $null
+          $ast = [System.Management.Automation.Language.Parser]::ParseFile("./NetWatch.ps1", [ref]$null, [ref]$errors)
+          
+          if ($errors -and $errors.Count -gt 0) {
+            Write-Error "Syntax errors found:"
+            $errors | ForEach-Object { Write-Error $_.Message }
+            exit 1
+          }
+          
           if ($ast) {
             Write-Host "✓ Syntax validation passed on Windows"
           } else {
@@ -42,11 +66,26 @@ jobs:
       - name: Run Pester tests
         shell: pwsh
         run: |
+          Write-Host "==> Running Pester tests..."
+          
+          if (-not (Test-Path "./NetWatch.Tests.ps1")) {
+            Write-Error "NetWatch.Tests.ps1 not found!"
+            exit 1
+          }
+          
           $config = New-PesterConfiguration
           $config.Run.Path = './NetWatch.Tests.ps1'
           $config.Run.Exit = $true
           $config.Output.Verbosity = 'Detailed'
-          Invoke-Pester -Configuration $config
+          
+          $result = Invoke-Pester -Configuration $config
+          
+          if ($result.FailedCount -gt 0) {
+            Write-Error "Pester tests failed: $($result.FailedCount) failed out of $($result.TotalCount)"
+            exit 1
+          }
+          
+          Write-Host "✓ All $($result.PassedCount) Pester tests passed"
 
   test-python-windows:
     name: Test Python 3.12 on Windows
@@ -64,22 +103,73 @@ jobs:
       - name: Install dependencies
         shell: pwsh
         run: |
+          Write-Host "==> Python version:"
+          python --version
+          Write-Host ""
+          Write-Host "==> Upgrading pip..."
           python -m pip install --upgrade pip
+          Write-Host ""
+          Write-Host "==> Installing fritzconnection..."
           pip install fritzconnection
+          Write-Host ""
+          Write-Host "==> Verifying installation:"
+          pip show fritzconnection
 
       - name: Test fritzlog_pull.py
         shell: pwsh
         run: |
+          Write-Host "==> Testing fritzlog_pull.py..."
+          
+          Write-Host "==> Compiling..."
           python -m py_compile fritzlog_pull.py
+          if ($LASTEXITCODE -ne 0) {
+            Write-Error "Compilation failed"
+            exit 1
+          }
+          
+          Write-Host "==> Testing import..."
           python -c "import fritzlog_pull; print('✓ Import successful')"
+          if ($LASTEXITCODE -ne 0) {
+            Write-Error "Import failed"
+            exit 1
+          }
+          
+          Write-Host "==> Testing CLI help..."
           python fritzlog_pull.py --help
+          if ($LASTEXITCODE -ne 0) {
+            Write-Error "CLI help failed"
+            exit 1
+          }
+          
+          Write-Host "✓ fritzlog_pull.py tests passed"
 
       - name: Test analyze_netlogs.py
         shell: pwsh
         run: |
+          Write-Host "==> Testing analyze_netlogs.py..."
+          
+          Write-Host "==> Compiling..."
           python -m py_compile analyze_netlogs.py
+          if ($LASTEXITCODE -ne 0) {
+            Write-Error "Compilation failed"
+            exit 1
+          }
+          
+          Write-Host "==> Testing import..."
           python -c "import analyze_netlogs; print('✓ Import successful')"
+          if ($LASTEXITCODE -ne 0) {
+            Write-Error "Import failed"
+            exit 1
+          }
+          
+          Write-Host "==> Testing CLI help..."
           python analyze_netlogs.py --help
+          if ($LASTEXITCODE -ne 0) {
+            Write-Error "CLI help failed"
+            exit 1
+          }
+          
+          Write-Host "✓ analyze_netlogs.py tests passed"
 
   integration-test:
     name: Integration Test
@@ -98,34 +188,74 @@ jobs:
       - name: Install dependencies
         shell: pwsh
         run: |
+          Write-Host "==> Installing Python dependencies..."
           pip install fritzconnection
+          Write-Host "==> Dependencies installed"
 
       - name: Install PowerShell modules
         shell: pwsh
         run: |
+          Write-Host "==> Installing PowerShell modules..."
           Set-PSRepository PSGallery -InstallationPolicy Trusted
           Install-Module -Name Pester -Force -Scope CurrentUser -SkipPublisherCheck
+          Write-Host "==> Pester installed"
 
       - name: Run all validations
         shell: pwsh
         run: |
-          Write-Host "Testing Python scripts..."
+          Write-Host "==> Running integration tests - Python validations..."
+          
+          Write-Host "==> Compiling Python scripts..."
           python -m py_compile fritzlog_pull.py
+          if ($LASTEXITCODE -ne 0) {
+            Write-Error "fritzlog_pull.py compilation failed"
+            exit 1
+          }
+          
           python -m py_compile analyze_netlogs.py
+          if ($LASTEXITCODE -ne 0) {
+            Write-Error "analyze_netlogs.py compilation failed"
+            exit 1
+          }
+          
+          Write-Host "==> Testing CLI help commands..."
           python fritzlog_pull.py --help
+          if ($LASTEXITCODE -ne 0) {
+            Write-Error "fritzlog_pull.py --help failed"
+            exit 1
+          }
+          
           python analyze_netlogs.py --help
+          if ($LASTEXITCODE -ne 0) {
+            Write-Error "analyze_netlogs.py --help failed"
+            exit 1
+          }
+          
           Write-Host "✓ Python validations passed"
 
       - name: Run PowerShell tests
         shell: pwsh
         run: |
-          Write-Host "Testing PowerShell script..."
+          Write-Host "==> Running integration tests - PowerShell tests..."
+          
+          if (-not (Test-Path './NetWatch.Tests.ps1')) {
+            Write-Error "NetWatch.Tests.ps1 not found!"
+            exit 1
+          }
+          
           $config = New-PesterConfiguration
           $config.Run.Path = './NetWatch.Tests.ps1'
           $config.Run.Exit = $true
           $config.Output.Verbosity = 'Normal'
-          Invoke-Pester -Configuration $config
-          Write-Host "✓ PowerShell tests passed"
+          
+          $result = Invoke-Pester -Configuration $config
+          
+          if ($result.FailedCount -gt 0) {
+            Write-Error "Pester tests failed: $($result.FailedCount) failed out of $($result.TotalCount)"
+            exit 1
+          }
+          
+          Write-Host "✓ PowerShell tests passed ($($result.PassedCount) tests)"
 
       - name: Summary
         shell: pwsh

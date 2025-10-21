@@ -22,18 +22,42 @@ jobs:
       - name: Install PSScriptAnalyzer
         shell: pwsh
         run: |
+          Write-Host "==> Installing PSScriptAnalyzer module..."
           Set-PSRepository PSGallery -InstallationPolicy Trusted
           Install-Module -Name PSScriptAnalyzer -Force -Scope CurrentUser -SkipPublisherCheck
+          Write-Host "==> PSScriptAnalyzer installed successfully"
+          Get-Module -ListAvailable PSScriptAnalyzer | Select-Object Name, Version | Format-Table
 
       - name: Install Pester
         shell: pwsh
         run: |
+          Write-Host "==> Installing Pester module..."
           Install-Module -Name Pester -Force -Scope CurrentUser -SkipPublisherCheck
+          Write-Host "==> Pester installed successfully"
+          Get-Module -ListAvailable Pester | Select-Object Name, Version | Format-Table
 
       - name: Validate PowerShell syntax
         shell: pwsh
         run: |
-          $ast = [System.Management.Automation.Language.Parser]::ParseFile("./NetWatch.ps1", [ref]$null, [ref]$null)
+          Write-Host "==> Validating PowerShell syntax for NetWatch.ps1..."
+          Write-Host "Current directory: $PWD"
+          Write-Host "Files in directory:"
+          Get-ChildItem | Select-Object Name, Length | Format-Table
+          
+          if (-not (Test-Path "./NetWatch.ps1")) {
+            Write-Error "NetWatch.ps1 not found in current directory!"
+            exit 1
+          }
+          
+          $errors = $null
+          $ast = [System.Management.Automation.Language.Parser]::ParseFile("./NetWatch.ps1", [ref]$null, [ref]$errors)
+          
+          if ($errors -and $errors.Count -gt 0) {
+            Write-Error "Syntax errors found:"
+            $errors | ForEach-Object { Write-Error $_.Message }
+            exit 1
+          }
+          
           if ($ast) {
             Write-Host "✓ NetWatch.ps1 syntax is valid"
           } else {
@@ -44,17 +68,28 @@ jobs:
       - name: Run PSScriptAnalyzer
         shell: pwsh
         run: |
+          Write-Host "==> Running PSScriptAnalyzer on NetWatch.ps1..."
           $results = Invoke-ScriptAnalyzer -Path ./NetWatch.ps1 -Severity Error
+          
           if ($results) {
+            Write-Host "PSScriptAnalyzer found errors:"
             $results | Format-Table -AutoSize
-            Write-Error "PSScriptAnalyzer found errors"
+            Write-Error "PSScriptAnalyzer found $($results.Count) error(s)"
             exit 1
           }
-          Write-Host "✓ PSScriptAnalyzer passed (no errors)"
+          
+          Write-Host "✓ PSScriptAnalyzer passed (no errors found)"
 
       - name: Run Pester tests
         shell: pwsh
         run: |
+          Write-Host "==> Running Pester tests..."
+          
+          if (-not (Test-Path "./NetWatch.Tests.ps1")) {
+            Write-Error "NetWatch.Tests.ps1 not found!"
+            exit 1
+          }
+          
           $config = New-PesterConfiguration
           $config.Run.Path = './NetWatch.Tests.ps1'
           $config.Run.Exit = $true
@@ -62,7 +97,19 @@ jobs:
           $config.TestResult.Enabled = $true
           $config.TestResult.OutputPath = 'test-results.xml'
           
-          Invoke-Pester -Configuration $config
+          Write-Host "Pester configuration:"
+          Write-Host "  Path: $($config.Run.Path.Value)"
+          Write-Host "  Exit: $($config.Run.Exit.Value)"
+          Write-Host "  Verbosity: $($config.Output.Verbosity.Value)"
+          
+          $result = Invoke-Pester -Configuration $config
+          
+          if ($result.FailedCount -gt 0) {
+            Write-Error "Pester tests failed: $($result.FailedCount) failed out of $($result.TotalCount)"
+            exit 1
+          }
+          
+          Write-Host "✓ All $($result.PassedCount) Pester tests passed"
 
       - name: Upload test results
         uses: actions/upload-artifact@v4
@@ -86,28 +133,84 @@ jobs:
       - name: Install dependencies
         shell: pwsh
         run: |
+          Write-Host "==> Python version:"
+          python --version
+          Write-Host ""
+          Write-Host "==> Upgrading pip..."
           python -m pip install --upgrade pip
+          Write-Host ""
+          Write-Host "==> Installing fritzconnection..."
           pip install fritzconnection
+          Write-Host ""
+          Write-Host "==> Installed packages:"
+          pip list | Select-String -Pattern "fritzconnection|pip"
 
       - name: Validate Python syntax
         shell: pwsh
         run: |
+          Write-Host "==> Validating Python syntax..."
+          Write-Host "Current directory: $PWD"
+          Write-Host "Python files:"
+          Get-ChildItem *.py | Select-Object Name, Length | Format-Table
+          
+          Write-Host "==> Compiling fritzlog_pull.py..."
           python -m py_compile fritzlog_pull.py
+          if ($LASTEXITCODE -ne 0) {
+            Write-Error "fritzlog_pull.py syntax validation failed"
+            exit 1
+          }
+          
+          Write-Host "==> Compiling analyze_netlogs.py..."
           python -m py_compile analyze_netlogs.py
-          Write-Host "✓ Python syntax validation passed"
+          if ($LASTEXITCODE -ne 0) {
+            Write-Error "analyze_netlogs.py syntax validation failed"
+            exit 1
+          }
+          
+          Write-Host "✓ Python syntax validation passed for all files"
 
       - name: Test imports
         shell: pwsh
         run: |
-          python -c "import fritzlog_pull; print('✓ fritzlog_pull.py imports successfully')"
-          python -c "import analyze_netlogs; print('✓ analyze_netlogs.py imports successfully')"
+          Write-Host "==> Testing Python imports..."
+          
+          Write-Host "==> Importing fritzlog_pull..."
+          python -c "import sys; import fritzlog_pull; print('✓ fritzlog_pull.py imports successfully')"
+          if ($LASTEXITCODE -ne 0) {
+            Write-Error "Failed to import fritzlog_pull.py"
+            exit 1
+          }
+          
+          Write-Host "==> Importing analyze_netlogs..."
+          python -c "import sys; import analyze_netlogs; print('✓ analyze_netlogs.py imports successfully')"
+          if ($LASTEXITCODE -ne 0) {
+            Write-Error "Failed to import analyze_netlogs.py"
+            exit 1
+          }
+          
+          Write-Host "✓ All imports successful"
 
       - name: Test CLI help
         shell: pwsh
         run: |
+          Write-Host "==> Testing CLI help commands..."
+          
+          Write-Host "==> Testing fritzlog_pull.py --help..."
           python fritzlog_pull.py --help
+          if ($LASTEXITCODE -ne 0) {
+            Write-Error "fritzlog_pull.py --help failed"
+            exit 1
+          }
+          
+          Write-Host ""
+          Write-Host "==> Testing analyze_netlogs.py --help..."
           python analyze_netlogs.py --help
-          Write-Host "✓ CLI help commands work"
+          if ($LASTEXITCODE -ne 0) {
+            Write-Error "analyze_netlogs.py --help failed"
+            exit 1
+          }
+          
+          Write-Host "✓ All CLI help commands work"
 
   lint-python:
     name: Lint Python Code
@@ -124,16 +227,39 @@ jobs:
       - name: Install linting tools
         shell: pwsh
         run: |
+          Write-Host "==> Python version:"
+          python --version
+          Write-Host ""
+          Write-Host "==> Upgrading pip..."
           python -m pip install --upgrade pip
+          Write-Host ""
+          Write-Host "==> Installing linting tools..."
           pip install flake8 pylint
+          Write-Host ""
+          Write-Host "==> Installed packages:"
+          pip list | Select-String -Pattern "flake8|pylint"
 
       - name: Run flake8
         shell: pwsh
         run: |
-          # Stop on errors, but allow warnings
+          Write-Host "==> Running flake8 linting..."
+          Write-Host "Python files in current directory:"
+          Get-ChildItem *.py | Select-Object Name | Format-Table
+          Write-Host ""
+          
+          Write-Host "==> Checking for critical errors (E9, F63, F7, F82)..."
           flake8 *.py --count --select=E9,F63,F7,F82 --show-source --statistics
-          # Full report (exit-zero treats all errors as warnings)
+          if ($LASTEXITCODE -ne 0) {
+            Write-Error "flake8 found critical errors"
+            exit 1
+          }
+          
+          Write-Host ""
+          Write-Host "==> Running full flake8 report..."
           flake8 *.py --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+          
+          Write-Host ""
+          Write-Host "✓ flake8 linting completed successfully"
 
   security-scan:
     name: Security Scan
@@ -142,6 +268,14 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: List files for scanning
+        run: |
+          echo "==> Files to be scanned by Trivy:"
+          ls -lah
+          echo ""
+          echo "==> Python files:"
+          ls -lh *.py
+
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@master
         with:
@@ -149,6 +283,17 @@ jobs:
           scan-ref: '.'
           format: 'sarif'
           output: 'trivy-results.sarif'
+
+      - name: Display Trivy results
+        if: always()
+        run: |
+          echo "==> Trivy scan completed"
+          if [ -f trivy-results.sarif ]; then
+            echo "SARIF file created successfully"
+            ls -lh trivy-results.sarif
+          else
+            echo "Warning: SARIF file not found"
+          fi
 
       - name: Upload Trivy results to GitHub Security
         uses: github/codeql-action/upload-sarif@v3
@@ -165,13 +310,42 @@ jobs:
       - name: Check all jobs
         shell: pwsh
         run: |
+          Write-Host "==> Checking status of all jobs..."
+          Write-Host ""
+          
+          $jobs = @{
+            "Validate PowerShell Scripts" = "${{ needs.validate-powershell.result }}"
+            "Validate Python Scripts (3.12)" = "${{ needs.validate-python.result }}"
+            "Lint Python Code" = "${{ needs.lint-python.result }}"
+            "Security Scan" = "${{ needs.security-scan.result }}"
+          }
+          
           $failed = $false
-          if ("${{ needs.validate-powershell.result }}" -ne "success") { $failed = $true }
-          if ("${{ needs.validate-python.result }}" -ne "success") { $failed = $true }
-          if ("${{ needs.lint-python.result }}" -ne "success") { $failed = $true }
+          $failedJobs = @()
+          
+          foreach ($job in $jobs.GetEnumerator()) {
+            $status = $job.Value
+            $icon = if ($status -eq "success") { "✓" } else { "✗" }
+            $color = if ($status -eq "success") { "Green" } else { "Red" }
+            
+            Write-Host "$icon $($job.Key): $status" -ForegroundColor $color
+            
+            if ($status -ne "success") {
+              $failed = $true
+              $failedJobs += $job.Key
+            }
+          }
+          
+          Write-Host ""
           
           if ($failed) {
-            Write-Host "❌ Some checks failed"
+            Write-Host "❌ The following checks failed:" -ForegroundColor Red
+            foreach ($job in $failedJobs) {
+              Write-Host "  - $job" -ForegroundColor Red
+            }
+            Write-Host ""
+            Write-Host "Please review the logs for the failed jobs above." -ForegroundColor Yellow
             exit 1
           }
-          Write-Host "✅ All checks passed successfully"
+          
+          Write-Host "✅ All checks passed successfully!" -ForegroundColor Green
