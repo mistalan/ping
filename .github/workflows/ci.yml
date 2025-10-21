@@ -39,46 +39,77 @@ jobs:
       - name: Validate PowerShell syntax
         shell: pwsh
         run: |
-          Write-Host "==> Validating PowerShell syntax for NetWatch.ps1..."
+          Write-Host "==> Validating PowerShell syntax for all PowerShell scripts..."
           Write-Host "Current directory: $PWD"
           Write-Host "Files in directory:"
           Get-ChildItem | Select-Object Name, Length | Format-Table
           
-          if (-not (Test-Path "./NetWatch.ps1")) {
-            Write-Error "NetWatch.ps1 not found in current directory!"
+          $scripts = @("NetWatch.ps1", "NetWatchUI.ps1")
+          $allValid = $true
+          
+          foreach ($script in $scripts) {
+            Write-Host ""
+            Write-Host "==> Validating $script..."
+            
+            if (-not (Test-Path "./$script")) {
+              Write-Error "$script not found in current directory!"
+              $allValid = $false
+              continue
+            }
+            
+            $errors = $null
+            $ast = [System.Management.Automation.Language.Parser]::ParseFile("./$script", [ref]$null, [ref]$errors)
+            
+            if ($errors -and $errors.Count -gt 0) {
+              Write-Error "Syntax errors found in ${script}:"
+              $errors | ForEach-Object { Write-Error $_.Message }
+              $allValid = $false
+            } elseif ($ast) {
+              Write-Host "✓ $script syntax is valid"
+            } else {
+              Write-Error "$script syntax validation failed"
+              $allValid = $false
+            }
+          }
+          
+          if (-not $allValid) {
+            Write-Error "One or more PowerShell scripts have syntax errors"
             exit 1
           }
           
-          $errors = $null
-          $ast = [System.Management.Automation.Language.Parser]::ParseFile("./NetWatch.ps1", [ref]$null, [ref]$errors)
-          
-          if ($errors -and $errors.Count -gt 0) {
-            Write-Error "Syntax errors found:"
-            $errors | ForEach-Object { Write-Error $_.Message }
-            exit 1
-          }
-          
-          if ($ast) {
-            Write-Host "✓ NetWatch.ps1 syntax is valid"
-          } else {
-            Write-Error "NetWatch.ps1 syntax validation failed"
-            exit 1
-          }
+          Write-Host ""
+          Write-Host "✓ All PowerShell scripts passed syntax validation"
 
       - name: Run PSScriptAnalyzer
         shell: pwsh
         run: |
-          Write-Host "==> Running PSScriptAnalyzer on NetWatch.ps1..."
-          $results = Invoke-ScriptAnalyzer -Path ./NetWatch.ps1 -Severity Error
+          Write-Host "==> Running PSScriptAnalyzer on all PowerShell scripts..."
           
-          if ($results) {
-            Write-Host "PSScriptAnalyzer found errors:"
-            $results | Format-Table -AutoSize
-            Write-Error "PSScriptAnalyzer found $($results.Count) error(s)"
+          $scripts = @("NetWatch.ps1", "NetWatchUI.ps1")
+          $allClean = $true
+          
+          foreach ($script in $scripts) {
+            Write-Host ""
+            Write-Host "==> Analyzing $script..."
+            $results = Invoke-ScriptAnalyzer -Path "./$script" -Severity Error
+            
+            if ($results) {
+              Write-Host "PSScriptAnalyzer found errors in ${script}:"
+              $results | Format-Table -AutoSize
+              Write-Error "PSScriptAnalyzer found $($results.Count) error(s) in $script"
+              $allClean = $false
+            } else {
+              Write-Host "✓ $script passed PSScriptAnalyzer (no errors)"
+            }
+          }
+          
+          if (-not $allClean) {
+            Write-Error "PSScriptAnalyzer found errors in one or more scripts"
             exit 1
           }
           
-          Write-Host "✓ PSScriptAnalyzer passed (no errors found)"
+          Write-Host ""
+          Write-Host "✓ All PowerShell scripts passed PSScriptAnalyzer"
 
       - name: Run Pester tests
         shell: pwsh

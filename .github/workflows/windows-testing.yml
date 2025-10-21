@@ -42,26 +42,40 @@ jobs:
           Write-Host "==> Validating PowerShell syntax..."
           Write-Host "Current directory: $PWD"
           
-          if (-not (Test-Path "./NetWatch.ps1")) {
-            Write-Error "NetWatch.ps1 not found!"
+          $scripts = @("NetWatch.ps1", "NetWatchUI.ps1")
+          $allValid = $true
+          
+          foreach ($script in $scripts) {
+            Write-Host ""
+            Write-Host "==> Validating $script..."
+            
+            if (-not (Test-Path "./$script")) {
+              Write-Error "$script not found!"
+              $allValid = $false
+              continue
+            }
+            
+            $errors = $null
+            $ast = [System.Management.Automation.Language.Parser]::ParseFile("./$script", [ref]$null, [ref]$errors)
+            
+            if ($errors -and $errors.Count -gt 0) {
+              Write-Error "Syntax errors found in ${script}:"
+              $errors | ForEach-Object { Write-Error $_.Message }
+              $allValid = $false
+            } elseif ($ast) {
+              Write-Host "✓ $script syntax validation passed on Windows"
+            } else {
+              Write-Error "$script syntax validation failed"
+              $allValid = $false
+            }
+          }
+          
+          if (-not $allValid) {
             exit 1
           }
           
-          $errors = $null
-          $ast = [System.Management.Automation.Language.Parser]::ParseFile("./NetWatch.ps1", [ref]$null, [ref]$errors)
-          
-          if ($errors -and $errors.Count -gt 0) {
-            Write-Error "Syntax errors found:"
-            $errors | ForEach-Object { Write-Error $_.Message }
-            exit 1
-          }
-          
-          if ($ast) {
-            Write-Host "✓ Syntax validation passed on Windows"
-          } else {
-            Write-Error "Syntax validation failed"
-            exit 1
-          }
+          Write-Host ""
+          Write-Host "✓ All PowerShell scripts validated successfully"
 
       - name: Run Pester tests
         shell: pwsh
