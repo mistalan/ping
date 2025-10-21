@@ -172,11 +172,11 @@ jobs:
           Write-Host "==> Upgrading pip..."
           python -m pip install --upgrade pip
           Write-Host ""
-          Write-Host "==> Installing fritzconnection..."
-          pip install fritzconnection
+          Write-Host "==> Installing fritzconnection and test dependencies..."
+          pip install fritzconnection pytest pytest-cov
           Write-Host ""
           Write-Host "==> Installed packages:"
-          pip list | Select-String -Pattern "fritzconnection|pip"
+          pip list | Select-String -Pattern "fritzconnection|pytest|pip"
 
       - name: Validate Python syntax
         shell: pwsh
@@ -244,6 +244,40 @@ jobs:
           }
           
           Write-Host "All CLI help commands work"
+
+      - name: Run Python unit tests
+        shell: pwsh
+        run: |
+          Write-Host "==> Running Python unit tests with pytest..."
+          Write-Host ""
+          Write-Host "==> Test files in current directory:"
+          Get-ChildItem test_*.py | Select-Object Name, Length | Format-Table
+          Write-Host ""
+          
+          Write-Host "==> Running pytest with verbose output..."
+          python -m pytest test_fritzlog_pull.py -v --tb=short
+          if ($LASTEXITCODE -ne 0) {
+            Write-Error "pytest tests failed"
+            exit 1
+          }
+          
+          Write-Host ""
+          Write-Host "==> Running pytest with coverage report..."
+          python -m pytest test_fritzlog_pull.py --cov=fritzlog_pull --cov-report=term --cov-report=xml
+          if ($LASTEXITCODE -ne 0) {
+            Write-Error "pytest with coverage failed"
+            exit 1
+          }
+          
+          Write-Host ""
+          Write-Host "[PASS] All Python unit tests passed"
+
+      - name: Upload Python test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: python-test-coverage
+          path: coverage.xml
 
   lint-python:
     name: Lint Python Code

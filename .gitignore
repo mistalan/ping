@@ -28,3 +28,9 @@ Thumbs.db
 /tmp/
 *.csv
 *.log
+
+# Pytest
+.pytest_cache/
+.coverage
+coverage.xml
+htmlcov/
