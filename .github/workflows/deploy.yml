@@ -36,9 +36,29 @@ jobs:
       - name: Validate PowerShell script
         shell: pwsh
         run: |
-          $ast = [System.Management.Automation.Language.Parser]::ParseFile("./NetWatch.ps1", [ref]$null, [ref]$null)
-          if (-not $ast) {
-            Write-Error "NetWatch.ps1 syntax validation failed"
+          Write-Host "==> Validating PowerShell scripts..."
+          
+          $scripts = @("NetWatch.ps1", "NetWatchUI.ps1")
+          $allValid = $true
+          
+          foreach ($script in $scripts) {
+            Write-Host "==> Validating $script..."
+            $errors = $null
+            $ast = [System.Management.Automation.Language.Parser]::ParseFile("./$script", [ref]$null, [ref]$errors)
+            
+            if ($errors -and $errors.Count -gt 0) {
+              Write-Error "Syntax errors in ${script}:"
+              $errors | ForEach-Object { Write-Error $_.Message }
+              $allValid = $false
+            } elseif (-not $ast) {
+              Write-Error "$script syntax validation failed"
+              $allValid = $false
+            } else {
+              Write-Host "[PASS] $script syntax is valid"
+            }
+          }
+          
+          if (-not $allValid) {
             exit 1
           }
 
@@ -49,6 +69,7 @@ jobs:
           
           # Copy scripts
           Copy-Item NetWatch.ps1 package/
+          Copy-Item NetWatchUI.ps1 package/
           Copy-Item fritzlog_pull.py package/
           Copy-Item analyze_netlogs.py package/
           Copy-Item README.md package/
@@ -60,7 +81,19 @@ jobs:
           @'
           # Quick Start Guide
           
-          ## Windows Network Monitor
+          ## Network Monitor UI (Recommended)
+          
+          Double-click `NetWatchUI.ps1` or run:
+          
+          ```powershell
+          .\NetWatchUI.ps1
+          ```
+          
+          This opens a graphical interface to configure and control all monitoring tools.
+          
+          ## Command Line Usage
+          
+          ### Windows Network Monitor
           
           ```powershell
           .\NetWatch.ps1 -IntervalSeconds 30
@@ -68,7 +101,7 @@ jobs:
           
           Stop with Ctrl+C. Logs saved to `~/Ping/Log/netwatch_log.csv`
           
-          ## FRITZ!Box Logger
+          ### FRITZ!Box Logger
           
           ```bash
           pip install -r requirements.txt
@@ -77,7 +110,7 @@ jobs:
           
           Stop with Ctrl+C. Logs saved to `~/Ping/Log/fritz_status_log.csv`
           
-          ## Analyze Logs
+          ### Analyze Logs
           
           ```bash
           python3 analyze_netlogs.py \
@@ -156,6 +189,7 @@ jobs:
           Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value "- Run: #${{ github.run_number }}"
           Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value ""
           Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value "**Package Contents:**"
+          Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value "- NetWatchUI.ps1 (Main UI - Recommended)"
           Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value "- NetWatch.ps1"
           Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value "- fritzlog_pull.py"
           Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value "- analyze_netlogs.py"

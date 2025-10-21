@@ -71,6 +71,7 @@ jobs:
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Force -Path release | Out-Null
+          Copy-Item NetWatchUI.ps1 release/
           Copy-Item NetWatch.ps1 release/
           Copy-Item fritzlog_pull.py release/
           Copy-Item analyze_netlogs.py release/
@@ -84,6 +85,10 @@ jobs:
           # Installation Guide
           
           ## Prerequisites
+          
+          ### For NetWatchUI.ps1 (Main UI - Recommended)
+          - Windows PowerShell 5+ or PowerShell Core 7+
+          - Python 3.10+ (for FRITZ!Box logging features)
           
           ### For NetWatch.ps1 (Windows only)
           - Windows PowerShell 5+ or PowerShell Core 7+
@@ -101,8 +106,16 @@ jobs:
              pip install -r requirements.txt
              ```
           
-          3. Run the scripts as needed:
-             - Windows: `.\NetWatch.ps1`
+          3. Run the monitoring tools:
+          
+             **Recommended - Graphical UI:**
+             ```powershell
+             .\NetWatchUI.ps1
+             ```
+             The UI provides easy configuration and control for all monitoring features.
+          
+             **Command Line:**
+             - Windows Monitor: `.\NetWatch.ps1`
              - FRITZ!Box Logger: `python3 fritzlog_pull.py --password YOUR_PASSWORD`
              - Analysis: `python3 analyze_netlogs.py --netwatch LOG1.csv --fritz LOG2.csv`
           
@@ -139,6 +152,7 @@ jobs:
           This release includes the complete network monitoring toolkit:
           
           ### Components
+          - **NetWatchUI.ps1** - Graphical UI for easy configuration and control (Recommended)
           - **NetWatch.ps1** - Windows PowerShell network monitoring script
           - **fritzlog_pull.py** - FRITZ!Box router status logger
           - **analyze_netlogs.py** - Log analysis and incident detection tool
@@ -148,6 +162,10 @@ jobs:
           Download either the `.zip` or `.tar.gz` archive and extract it. See `INSTALL.md` for detailed installation instructions.
           
           ### Requirements
+          
+          **For NetWatchUI.ps1 (Recommended):**
+          - Windows PowerShell 5+ or PowerShell Core 7+
+          - Python 3.10+ (optional, for FRITZ!Box logging)
           
           **For NetWatch.ps1:**
           - Windows PowerShell 5+ or PowerShell Core 7+
@@ -163,6 +181,10 @@ jobs:
           # Install Python dependencies
           pip install -r requirements.txt
           
+          # Run the graphical UI (Recommended)
+          .\NetWatchUI.ps1
+          
+          # Or use command line tools:
           # Run network monitor (Windows)
           .\NetWatch.ps1
           

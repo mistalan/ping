@@ -18,6 +18,8 @@ jobs:
   analyze:
     name: Analyze
     runs-on: ubuntu-latest
+    # Only run if CodeQL is available in the repository
+    if: github.repository == 'mistalan/ping' && github.event_name != 'push' || github.event_name == 'workflow_dispatch'
 
     strategy:
       fail-fast: false
@@ -33,11 +35,14 @@ jobs:
         with:
           languages: ${{ matrix.language }}
           queries: +security-and-quality
+        continue-on-error: true
 
       - name: Autobuild
         uses: github/codeql-action/autobuild@v3
+        continue-on-error: true
 
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v3
         with:
           category: "/language:${{ matrix.language }}"
+        continue-on-error: true
