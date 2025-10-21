@@ -128,7 +128,7 @@ python3 fritzlog_pull.py --host 192.168.178.1 --password YOUR_PASSWORD --interva
 - `--user` - FRITZ!Box username (default: None, often not needed for older setups)
 - `--password` - FRITZ!Box password (required)
 - `--interval` - Logging interval in seconds (default: 30)
-- `--out` - Output CSV file path (default: `~/Ping/Log/fritz_status_log.csv`)
+- `--out` - Output CSV file path (default: `~/Documents/Ping/Log/fritz_status_log.csv`)
 
 **What it logs:**
 - WAN connection status
@@ -218,7 +218,7 @@ The script also prints a summary of detected incidents to the console and option
 
 4. Analyze the collected logs:
    ```bash
-   python3 analyze_netlogs.py --netwatch ~/Documents/Ping/Log/netwatch_log.csv --fritz ~/Ping/Log/fritz_status_log.csv --out incidents.csv --plots
+   python3 analyze_netlogs.py --netwatch ~/Documents/Ping/Log/netwatch_log.csv --fritz ~/Documents/Ping/Log/fritz_status_log.csv --out incidents.csv --plots
    ```
 
 5. Review the generated incidents.csv and plots to identify network problems

@@ -156,7 +156,7 @@ def main():
     ap.add_argument("--user", default=None, help="FRITZ!Box Benutzername")
     ap.add_argument("--password", required=True, help="FRITZ!Box Passwort")
     ap.add_argument("--interval", type=int, default=30, help="Intervall in Sekunden (default: 30)")
-    default_out = os.path.join(os.path.expanduser("~"), "Ping", "Log", "fritz_status_log.csv")
+    default_out = os.path.join(os.path.expanduser("~"), "Documents", "Ping", "Log", "fritz_status_log.csv")
     ap.add_argument("--out", default=default_out, help=f"Pfad zur CSV (default: {default_out})")
 
     args = ap.parse_args()
