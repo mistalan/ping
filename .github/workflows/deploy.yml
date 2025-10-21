@@ -54,7 +54,7 @@ jobs:
               Write-Error "$script syntax validation failed"
               $allValid = $false
             } else {
-              Write-Host "✓ $script syntax is valid"
+              Write-Host "[PASS] $script syntax is valid"
             }
           }
           

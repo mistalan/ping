@@ -65,7 +65,7 @@ jobs:
               $errors | ForEach-Object { Write-Error $_.Message }
               $allValid = $false
             } elseif ($ast) {
-              Write-Host "✓ $script syntax is valid"
+              Write-Host "[PASS] $script syntax is valid"
             } else {
               Write-Error "$script syntax validation failed"
               $allValid = $false
@@ -78,7 +78,7 @@ jobs:
           }
           
           Write-Host ""
-          Write-Host "✓ All PowerShell scripts passed syntax validation"
+          Write-Host "[PASS] All PowerShell scripts passed syntax validation"
 
       - name: Run PSScriptAnalyzer
         shell: pwsh
@@ -99,7 +99,7 @@ jobs:
               Write-Error "PSScriptAnalyzer found $($results.Count) error(s) in $script"
               $allClean = $false
             } else {
-              Write-Host "✓ $script passed PSScriptAnalyzer (no errors)"
+              Write-Host "[PASS] $script passed PSScriptAnalyzer (no errors)"
             }
           }
           
@@ -109,7 +109,7 @@ jobs:
           }
           
           Write-Host ""
-          Write-Host "✓ All PowerShell scripts passed PSScriptAnalyzer"
+          Write-Host "[PASS] All PowerShell scripts passed PSScriptAnalyzer"
 
       - name: Run Pester tests
         shell: pwsh
@@ -200,7 +200,7 @@ jobs:
             exit 1
           }
           
-          Write-Host "✓ Python syntax validation passed for all files"
+          Write-Host "[PASS] Python syntax validation passed for all files"
 
       - name: Test imports
         shell: pwsh
@@ -360,7 +360,7 @@ jobs:
           
           foreach ($job in $jobs.GetEnumerator()) {
             $status = $job.Value
-            $icon = if ($status -eq "success") { "✓" } else { "✗" }
+            $icon = if ($status -eq "success") { "[PASS]" } else { "[FAIL]" }
             $color = if ($status -eq "success") { "Green" } else { "Red" }
             
             Write-Host "$icon $($job.Key): $status" -ForegroundColor $color
@@ -374,7 +374,7 @@ jobs:
           Write-Host ""
           
           if ($failed) {
-            Write-Host "❌ The following checks failed:" -ForegroundColor Red
+            Write-Host "[FAIL] The following checks failed:" -ForegroundColor Red
             foreach ($job in $failedJobs) {
               Write-Host "  - $job" -ForegroundColor Red
             }
@@ -383,4 +383,4 @@ jobs:
             exit 1
           }
           
-          Write-Host "✅ All checks passed successfully!" -ForegroundColor Green
+          Write-Host "[PASS] All checks passed successfully!" -ForegroundColor Green
