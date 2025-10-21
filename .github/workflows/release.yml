@@ -1,0 +1,210 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release version (e.g., v1.0.0)'
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  create-release:
+    name: Create Release
+    runs-on: windows-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set version
+        id: version
+        shell: pwsh
+        run: |
+          if ("${{ github.event_name }}" -eq "workflow_dispatch") {
+            "version=${{ inputs.version }}" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+          } else {
+            $tag = "${{ github.ref }}" -replace '^refs/tags/', ''
+            "version=$tag" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+          }
+
+      - name: Install PowerShell
+        shell: pwsh
+        run: |
+          $PSVersionTable.PSVersion
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install fritzconnection
+
+      - name: Run tests
+        shell: pwsh
+        run: |
+          Install-Module -Name Pester -Force -Scope CurrentUser -SkipPublisherCheck
+          $config = New-PesterConfiguration
+          $config.Run.Path = './NetWatch.Tests.ps1'
+          $config.Run.Exit = $true
+          $config.Output.Verbosity = 'Detailed'
+          Invoke-Pester -Configuration $config
+
+      - name: Validate Python scripts
+        run: |
+          python -m py_compile fritzlog_pull.py
+          python -m py_compile analyze_netlogs.py
+          python -c "import fritzlog_pull"
+          python -c "import analyze_netlogs"
+
+      - name: Create release package
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path release | Out-Null
+          Copy-Item NetWatch.ps1 release/
+          Copy-Item fritzlog_pull.py release/
+          Copy-Item analyze_netlogs.py release/
+          Copy-Item README.md release/
+          
+          # Create a requirements.txt for Python dependencies
+          "fritzconnection>=1.15.0" | Out-File -FilePath release/requirements.txt -Encoding utf8
+          
+          # Create installation guide
+          @'
+          # Installation Guide
+          
+          ## Prerequisites
+          
+          ### For NetWatch.ps1 (Windows only)
+          - Windows PowerShell 5+ or PowerShell Core 7+
+          - Administrator privileges recommended
+          
+          ### For Python Scripts
+          - Python 3.12 or higher
+          
+          ## Installation Steps
+          
+          1. Extract all files to a directory of your choice
+          
+          2. Install Python dependencies:
+             ```bash
+             pip install -r requirements.txt
+             ```
+          
+          3. Run the scripts as needed:
+             - Windows: `.\NetWatch.ps1`
+             - FRITZ!Box Logger: `python3 fritzlog_pull.py --password YOUR_PASSWORD`
+             - Analysis: `python3 analyze_netlogs.py --netwatch LOG1.csv --fritz LOG2.csv`
+          
+          For detailed usage instructions, see README.md
+          '@ | Out-File -FilePath release/INSTALL.md -Encoding utf8
+
+      - name: Create ZIP archive
+        shell: pwsh
+        run: |
+          Compress-Archive -Path release\* -DestinationPath "ping-${{ steps.version.outputs.version }}.zip"
+
+      - name: Create tarball
+        shell: bash
+        run: |
+          cd release
+          tar -czf ../ping-${{ steps.version.outputs.version }}.tar.gz .
+          cd ..
+
+      - name: Generate checksums
+        shell: pwsh
+        run: |
+          (Get-FileHash "ping-${{ steps.version.outputs.version }}.zip" -Algorithm SHA256).Hash.ToLower() + "  ping-${{ steps.version.outputs.version }}.zip" | Out-File -FilePath checksums.txt -Encoding utf8
+          (Get-FileHash "ping-${{ steps.version.outputs.version }}.tar.gz" -Algorithm SHA256).Hash.ToLower() + "  ping-${{ steps.version.outputs.version }}.tar.gz" | Out-File -FilePath checksums.txt -Append -Encoding utf8
+
+      - name: Generate release notes
+        id: release_notes
+        shell: pwsh
+        run: |
+          $VERSION = "${{ steps.version.outputs.version }}"
+          
+          @'
+          ## Network Monitoring Tools Release
+          
+          This release includes the complete network monitoring toolkit:
+          
+          ### Components
+          - **NetWatch.ps1** - Windows PowerShell network monitoring script
+          - **fritzlog_pull.py** - FRITZ!Box router status logger
+          - **analyze_netlogs.py** - Log analysis and incident detection tool
+          
+          ### Installation
+          
+          Download either the `.zip` or `.tar.gz` archive and extract it. See `INSTALL.md` for detailed installation instructions.
+          
+          ### Requirements
+          
+          **For NetWatch.ps1:**
+          - Windows PowerShell 5+ or PowerShell Core 7+
+          - Windows OS (uses Windows-specific cmdlets)
+          
+          **For Python scripts:**
+          - Python 3.12 or higher
+          - Dependencies: `fritzconnection` (install via `pip install -r requirements.txt`)
+          
+          ### Quick Start
+          
+          ```bash
+          # Install Python dependencies
+          pip install -r requirements.txt
+          
+          # Run network monitor (Windows)
+          .\NetWatch.ps1
+          
+          # Run FRITZ!Box logger
+          python3 fritzlog_pull.py --password YOUR_PASSWORD
+          
+          # Analyze logs
+          python3 analyze_netlogs.py --netwatch netwatch_log.csv --fritz fritz_log.csv
+          ```
+          
+          ### Checksums
+          
+          Verify your download using SHA256:
+          
+          ```
+          '@ | Out-File -FilePath release_notes.md -Encoding utf8
+          
+          Get-Content checksums.txt | Out-File -FilePath release_notes.md -Append -Encoding utf8
+          
+          "`n``````" | Out-File -FilePath release_notes.md -Append -Encoding utf8
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ steps.version.outputs.version }}
+          name: Release ${{ steps.version.outputs.version }}
+          body_path: release_notes.md
+          draft: false
+          prerelease: false
+          files: |
+            ping-${{ steps.version.outputs.version }}.zip
+            ping-${{ steps.version.outputs.version }}.tar.gz
+            checksums.txt
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload release artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-${{ steps.version.outputs.version }}
+          path: |
+            ping-${{ steps.version.outputs.version }}.zip
+            ping-${{ steps.version.outputs.version }}.tar.gz
+            checksums.txt
+            release_notes.md

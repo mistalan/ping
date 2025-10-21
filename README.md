@@ -1,5 +1,10 @@
 # ping
 
+[![CI](https://github.com/mistalan/ping/actions/workflows/ci.yml/badge.svg)](https://github.com/mistalan/ping/actions/workflows/ci.yml)
+[![Deploy](https://github.com/mistalan/ping/actions/workflows/deploy.yml/badge.svg)](https://github.com/mistalan/ping/actions/workflows/deploy.yml)
+[![CodeQL](https://github.com/mistalan/ping/actions/workflows/codeql.yml/badge.svg)](https://github.com/mistalan/ping/actions/workflows/codeql.yml)
+[![Windows Testing](https://github.com/mistalan/ping/actions/workflows/windows-testing.yml/badge.svg)](https://github.com/mistalan/ping/actions/workflows/windows-testing.yml)
+
 Network monitoring and diagnostics toolkit for discovering ping problems, analyzing disconnects, and logging network status.
 
 ## Overview
@@ -271,6 +276,27 @@ Invoke-Pester .\NetWatch.Tests.ps1
 - Install pandas for better performance and plotting support
 - Ensure timestamp formats in CSV files are consistent
 - If no incidents are detected, try lowering the threshold values
+
+## CI/CD and Automation
+
+This repository includes a comprehensive GitHub Actions pipeline for continuous integration, deployment, and releases:
+
+- **Continuous Integration**: Automated testing on every push and pull request
+  - PowerShell validation with PSScriptAnalyzer and Pester tests
+  - Python 3.12 validation and testing
+  - Windows-only testing (optimized for target platform)
+  - Security scanning with CodeQL and Trivy
+
+- **Automated Deployment**: Package scripts automatically on every push to main
+  - Downloads available as workflow artifacts
+  - 90-day retention for latest builds
+
+- **Release Management**: Create versioned releases with git tags
+  - Automatic package creation (ZIP and tarball)
+  - SHA256 checksums for verification
+  - Release notes generation
+
+For detailed information about the CI/CD pipeline, see [.github/WORKFLOWS.md](.github/WORKFLOWS.md).
 
 ## License
 
