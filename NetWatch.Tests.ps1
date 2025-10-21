@@ -52,8 +52,7 @@ Describe "ConvertTo-CsvValue" {
   }
 
   It "Wraps value with newline in quotes" {
-    ConvertTo-CsvValue "value`nwith newline" | Should -Be '"value
-with newline"'
+    ConvertTo-CsvValue "value`nwith newline" | Should -Be ('"value' + "`n" + 'with newline"')
   }
 
   It "Wraps value with carriage return in quotes" {
