@@ -439,12 +439,12 @@ $yPosControl += 90
 # Analysis Group
 $groupAnalysis = New-Object System.Windows.Forms.GroupBox
 $groupAnalysis.Location = New-Object System.Drawing.Point(10, $yPosControl)
-$groupAnalysis.Size = New-Object System.Drawing.Size(630, 80)
+$groupAnalysis.Size = New-Object System.Drawing.Size(630, 120)
 $groupAnalysis.Text = "Analysis"
 
 $btnAnalyze = New-Object System.Windows.Forms.Button
 $btnAnalyze.Location = New-Object System.Drawing.Point(20, 30)
-$btnAnalyze.Size = New-Object System.Drawing.Size(580, 35)
+$btnAnalyze.Size = New-Object System.Drawing.Size(280, 35)
 $btnAnalyze.Text = "Analyze Logs"
 $btnAnalyze.Font = New-Object System.Drawing.Font("Microsoft Sans Serif", 10, [System.Drawing.FontStyle]::Bold)
 $btnAnalyze.BackColor = [System.Drawing.Color]::LightBlue
@@ -497,8 +497,73 @@ $btnAnalyze.Add_Click({
 })
 $groupAnalysis.Controls.Add($btnAnalyze)
 
+$btnVisualize = New-Object System.Windows.Forms.Button
+$btnVisualize.Location = New-Object System.Drawing.Point(320, 30)
+$btnVisualize.Size = New-Object System.Drawing.Size(280, 35)
+$btnVisualize.Text = "View Visualizations"
+$btnVisualize.Font = New-Object System.Drawing.Font("Microsoft Sans Serif", 10, [System.Drawing.FontStyle]::Bold)
+$btnVisualize.BackColor = [System.Drawing.Color]::LightYellow
+$btnVisualize.Add_Click({
+    try {
+        # Check if incidents file exists
+        if (-not (Test-Path $textAnalyzeOut.Text)) {
+            [System.Windows.Forms.MessageBox]::Show("Incidents file not found: $($textAnalyzeOut.Text)`n`nPlease run 'Analyze Logs' first to generate the incidents file.", "Error", [System.Windows.Forms.MessageBoxButtons]::OK, [System.Windows.Forms.MessageBoxIcon]::Error)
+            return
+        }
+
+        $scriptPath = $PSScriptRoot
+        if ([string]::IsNullOrEmpty($scriptPath)) {
+            $scriptPath = Split-Path -Parent $MyInvocation.MyCommand.Path
+        }
+
+        $visualizeScript = Join-Path $scriptPath "visualize_incidents.py"
+        $outputDir = Split-Path $textAnalyzeOut.Text
+        
+        $visualizeArgs = @(
+            $visualizeScript,
+            "--input", $textAnalyzeOut.Text,
+            "--output-dir", $outputDir,
+            "--html"
+        )
+
+        $logOutput.AppendText("[$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')] Generating visualizations...`r`n")
+
+        # Run visualization and capture output
+        $result = & $script:PythonCommand $visualizeArgs 2>&1 | Out-String
+        $logOutput.AppendText($result)
+        $logOutput.AppendText("[$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')] Visualizations complete.`r`n")
+
+        # Open the HTML report in default browser
+        $htmlReport = Join-Path $outputDir "incidents_report.html"
+        if (Test-Path $htmlReport) {
+            Start-Process $htmlReport
+            [System.Windows.Forms.MessageBox]::Show("Visualizations generated successfully!`n`nOpening HTML report in your browser...`n`nGenerated files:`n- incidents_timeline.png`n- incidents_summary.png`n- incidents_report.html", "Success", [System.Windows.Forms.MessageBoxButtons]::OK, [System.Windows.Forms.MessageBoxIcon]::Information)
+        } else {
+            [System.Windows.Forms.MessageBox]::Show("Visualizations generated, but HTML report not found.`n`nCheck the log output for details.", "Warning", [System.Windows.Forms.MessageBoxButtons]::OK, [System.Windows.Forms.MessageBoxIcon]::Warning)
+        }
+    } catch {
+        [System.Windows.Forms.MessageBox]::Show("Failed to generate visualizations: $($_.Exception.Message)", "Error", [System.Windows.Forms.MessageBoxButtons]::OK, [System.Windows.Forms.MessageBoxIcon]::Error)
+        $logOutput.AppendText("[$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')] ERROR: $($_.Exception.Message)`r`n")
+    }
+})
+$groupAnalysis.Controls.Add($btnVisualize)
+
+$btnOpenFolder = New-Object System.Windows.Forms.Button
+$btnOpenFolder.Location = New-Object System.Drawing.Point(20, 75)
+$btnOpenFolder.Size = New-Object System.Drawing.Size(280, 30)
+$btnOpenFolder.Text = "Open Incidents Folder"
+$btnOpenFolder.Add_Click({
+    $incidentsFolder = Split-Path $textAnalyzeOut.Text
+    if (Test-Path $incidentsFolder) {
+        Start-Process "explorer.exe" -ArgumentList $incidentsFolder
+    } else {
+        [System.Windows.Forms.MessageBox]::Show("Folder does not exist yet: $incidentsFolder", "Info", [System.Windows.Forms.MessageBoxButtons]::OK, [System.Windows.Forms.MessageBoxIcon]::Information)
+    }
+})
+$groupAnalysis.Controls.Add($btnOpenFolder)
+
 $tabControl2.Controls.Add($groupAnalysis)
-$yPosControl += 90
+$yPosControl += 130
 
 # Log Output Group
 $groupLog = New-Object System.Windows.Forms.GroupBox
