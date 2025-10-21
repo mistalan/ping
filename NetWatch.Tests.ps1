@@ -7,7 +7,7 @@ BeforeAll {
 }
 
 Describe "Default Parameters" {
-  It "OutCsv default path uses UserProfile folder, not MyDocuments" {
+  It "OutCsv default path uses MyDocuments folder" {
     # Parse the script to extract the default OutCsv parameter value
     $scriptPath = "$PSScriptRoot/NetWatch.ps1"
     $ast = [System.Management.Automation.Language.Parser]::ParseFile($scriptPath, [ref]$null, [ref]$null)
@@ -21,9 +21,9 @@ Describe "Default Parameters" {
     # Get the default value expression as a string
     $defaultValueText = $outCsvParam.DefaultValue.Extent.Text
     
-    # Verify it uses UserProfile, not MyDocuments
-    $defaultValueText | Should -Match "UserProfile"
-    $defaultValueText | Should -Not -Match "MyDocuments"
+    # Verify it uses MyDocuments, not UserProfile
+    $defaultValueText | Should -Match "MyDocuments"
+    $defaultValueText | Should -Not -Match "UserProfile"
     
     # Verify it uses 'Log' folder
     $defaultValueText | Should -Match "'Log'"
