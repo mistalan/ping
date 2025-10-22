@@ -45,10 +45,14 @@ This repository uses GitHub Actions for continuous integration, deployment, and 
   - Automatically generates release notes
 
 ### CodeQL Security Analysis
-- **Trigger**: Push to main/master, Pull Requests, Weekly schedule, Manual
-- **Purpose**: Advanced security scanning for vulnerabilities
-- **Language**: Python
-- **Queries**: Security and quality rules
+- **Trigger**: Push to main/master, Pull Requests, Weekly schedule (Thursdays at 4:26 AM)
+- **Purpose**: Advanced security scanning for vulnerabilities and code quality issues
+- **Languages**: Python (scripts) and GitHub Actions (workflows)
+- **Queries**: security-extended and security-and-quality query packs
+- **Features**:
+  - Analyzes Python scripts for security vulnerabilities
+  - Scans GitHub Actions workflows for misconfigurations
+  - Uploads results to GitHub Security tab
 
 ### Windows Testing
 - **Trigger**: Push to main/master, Pull Requests, Daily schedule, Manual
@@ -129,7 +133,7 @@ The workflows use the following GitHub Actions from the marketplace:
 - **actions/checkout@v4** - Check out repository code
 - **actions/setup-python@v5** - Set up Python environment
 - **actions/upload-artifact@v4** - Upload build artifacts
-- **github/codeql-action@v3** - CodeQL security analysis
+- **github/codeql-action@v4** - CodeQL security analysis
 - **aquasecurity/trivy-action** - Trivy vulnerability scanner
 - **softprops/action-gh-release@v1** - Create GitHub releases
 
@@ -137,7 +141,7 @@ All dependencies are automatically kept up to date by Dependabot.
 
 ## Security
 
-- **CodeQL** scans for security vulnerabilities in Python code
+- **CodeQL** scans for security vulnerabilities in Python code and GitHub Actions workflows
 - **Trivy** scans for vulnerabilities in dependencies and filesystem
 - Security scan results are uploaded to GitHub Security tab
 - Scans run on every push, PR, and weekly via scheduled jobs
