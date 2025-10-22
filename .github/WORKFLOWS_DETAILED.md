@@ -7,7 +7,7 @@
 | **CI** | Push, PR, Manual | Quality Assurance | ~3-5 min | • PowerShell validation<br>• Pester tests (27 tests)<br>• Python 3.10-3.12 matrix<br>• Flake8 linting<br>• Trivy security scan |
 | **Deploy** | Push to main, Manual | Package Creation | ~2-3 min | • Creates ZIP & tarball<br>• SHA256 checksums<br>• 90-day artifact retention<br>• Build metadata |
 | **Release** | Git tags (v*.*.*), Manual | Official Releases | ~4-6 min | • Full test suite<br>• GitHub Release creation<br>• Auto-generated notes<br>• Permanent artifacts |
-| **CodeQL** | Push, PR, Weekly, Manual | Security Analysis | ~5-8 min | • Python code scanning<br>• Security & quality queries<br>• SARIF upload<br>• Scheduled weekly |
+| **CodeQL** | Push, PR, Weekly, Manual | Security Analysis | ~5-8 min | • Python & Actions scanning<br>• Security & quality queries<br>• SARIF upload<br>• Scheduled weekly |
 | **Multi-Platform** | Push, PR, Daily, Manual | Compatibility Testing | ~10-15 min | • 3 OS (Ubuntu/Win/Mac)<br>• 3 Python versions<br>• 9 test combinations<br>• Cross-platform PS |
 
 ## Workflow Relationships
@@ -111,10 +111,10 @@
 ### CodeQL Workflow
 
 **Jobs:**
-1. `analyze` - Security analysis
-   - Initialize CodeQL
-   - Analyze Python code
-   - Run security & quality queries
+1. `analyze` - Security analysis (matrix: actions, python)
+   - Install Python dependencies (for Python analysis)
+   - Initialize CodeQL with security-extended and security-and-quality queries
+   - Analyze Python scripts and GitHub Actions workflows
    - Upload results to Security tab
 
 ### Windows Testing Workflow
