@@ -57,7 +57,7 @@ $script:PythonCommand = Get-PythonCommand
 # Create the main form
 $form = New-Object System.Windows.Forms.Form
 $form.Text = "Network Monitor Control Panel"
-$form.Size = New-Object System.Drawing.Size(700, 650)
+$form.Size = New-Object System.Drawing.Size(700, 740)
 $form.StartPosition = "CenterScreen"
 $form.FormBorderStyle = "FixedDialog"
 $form.MaximizeBox = $false
@@ -65,7 +65,7 @@ $form.MaximizeBox = $false
 # Create TabControl
 $tabControl = New-Object System.Windows.Forms.TabControl
 $tabControl.Location = New-Object System.Drawing.Point(10, 10)
-$tabControl.Size = New-Object System.Drawing.Size(665, 590)
+$tabControl.Size = New-Object System.Drawing.Size(665, 680)
 
 # ===== Configuration Tab =====
 $tabConfig = New-Object System.Windows.Forms.TabPage
@@ -434,6 +434,90 @@ $btnStopTracking.Add_Click({
 $groupTracking.Controls.Add($btnStopTracking)
 
 $tabControl2.Controls.Add($groupTracking)
+$yPosControl += 90
+
+# FRITZ!Box Control Group
+$groupFritzControl = New-Object System.Windows.Forms.GroupBox
+$groupFritzControl.Location = New-Object System.Drawing.Point(10, $yPosControl)
+$groupFritzControl.Size = New-Object System.Drawing.Size(630, 80)
+$groupFritzControl.Text = "FRITZ!Box Control"
+
+$btnRestartFritz = New-Object System.Windows.Forms.Button
+$btnRestartFritz.Location = New-Object System.Drawing.Point(20, 30)
+$btnRestartFritz.Size = New-Object System.Drawing.Size(280, 35)
+$btnRestartFritz.Text = "Restart FRITZ!Box"
+$btnRestartFritz.Font = New-Object System.Drawing.Font("Microsoft Sans Serif", 10, [System.Drawing.FontStyle]::Bold)
+$btnRestartFritz.BackColor = [System.Drawing.Color]::Orange
+$btnRestartFritz.Add_Click({
+    if (-not $checkEnableFritz.Checked) {
+        [System.Windows.Forms.MessageBox]::Show("FRITZ!Box logging is disabled!`n`nPlease enable FRITZ!Box logging in the Configuration tab first.", "Error", [System.Windows.Forms.MessageBoxButtons]::OK, [System.Windows.Forms.MessageBoxIcon]::Error)
+        return
+    }
+
+    if ([string]::IsNullOrEmpty($textFritzPassword.Text)) {
+        [System.Windows.Forms.MessageBox]::Show("FRITZ!Box password is required!`n`nPlease set the password in the Configuration tab first.", "Error", [System.Windows.Forms.MessageBoxButtons]::OK, [System.Windows.Forms.MessageBoxIcon]::Error)
+        return
+    }
+
+    # Show confirmation dialog
+    $result = [System.Windows.Forms.MessageBox]::Show(
+        "WARNING: You are about to restart your FRITZ!Box!`n`nHost: $($textFritzHost.Text)`n`nThis will interrupt your internet connection for 1-2 minutes.`n`nAre you sure you want to continue?",
+        "Confirm FRITZ!Box Restart",
+        [System.Windows.Forms.MessageBoxButtons]::YesNo,
+        [System.Windows.Forms.MessageBoxIcon]::Warning
+    )
+
+    if ($result -ne [System.Windows.Forms.DialogResult]::Yes) {
+        $logOutput.AppendText("[$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')] FRITZ!Box restart cancelled by user.`r`n")
+        return
+    }
+
+    try {
+        $scriptPath = $PSScriptRoot
+        if ([string]::IsNullOrEmpty($scriptPath)) {
+            $scriptPath = Split-Path -Parent $MyInvocation.MyCommand.Path
+        }
+
+        $restartScript = Join-Path $scriptPath "fritzbox_restart.py"
+        $restartArgs = @(
+            $restartScript,
+            "--host", $textFritzHost.Text,
+            "--password", $textFritzPassword.Text,
+            "--yes"  # Skip confirmation since we already confirmed in GUI
+        )
+
+        if (-not [string]::IsNullOrEmpty($textFritzUser.Text)) {
+            $restartArgs += @("--user", $textFritzUser.Text)
+        }
+
+        $logOutput.AppendText("[$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')] Sending restart command to FRITZ!Box ($($textFritzHost.Text))...`r`n")
+
+        # Run restart command and capture output
+        $result = & $script:PythonCommand $restartArgs 2>&1 | Out-String
+        $logOutput.AppendText($result)
+
+        if ($LASTEXITCODE -eq 0) {
+            $logOutput.AppendText("[$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')] FRITZ!Box restart command sent successfully. The router will reboot in a moment.`r`n")
+            [System.Windows.Forms.MessageBox]::Show("Restart command sent successfully!`n`nYour FRITZ!Box will now reboot.`nThis will take approximately 1-2 minutes.`n`nYour internet connection will be temporarily unavailable.", "Success", [System.Windows.Forms.MessageBoxButtons]::OK, [System.Windows.Forms.MessageBoxIcon]::Information)
+        } else {
+            $logOutput.AppendText("[$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')] ERROR: Failed to send restart command (exit code: $LASTEXITCODE)`r`n")
+            [System.Windows.Forms.MessageBox]::Show("Failed to restart FRITZ!Box!`n`nPlease check the Activity Log for details.`n`nCommon issues:`n- Wrong password`n- FRITZ!Box not reachable`n- TR-064 not enabled in FRITZ!Box settings", "Error", [System.Windows.Forms.MessageBoxButtons]::OK, [System.Windows.Forms.MessageBoxIcon]::Error)
+        }
+    } catch {
+        [System.Windows.Forms.MessageBox]::Show("Failed to restart FRITZ!Box: $($_.Exception.Message)", "Error", [System.Windows.Forms.MessageBoxButtons]::OK, [System.Windows.Forms.MessageBoxIcon]::Error)
+        $logOutput.AppendText("[$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')] ERROR: $($_.Exception.Message)`r`n")
+    }
+})
+$groupFritzControl.Controls.Add($btnRestartFritz)
+
+$labelRestartInfo = New-Object System.Windows.Forms.Label
+$labelRestartInfo.Location = New-Object System.Drawing.Point(320, 30)
+$labelRestartInfo.Size = New-Object System.Drawing.Size(280, 35)
+$labelRestartInfo.Text = "Reboots the FRITZ!Box router using credentials from the Configuration tab."
+$labelRestartInfo.Font = New-Object System.Drawing.Font("Microsoft Sans Serif", 8)
+$groupFritzControl.Controls.Add($labelRestartInfo)
+
+$tabControl2.Controls.Add($groupFritzControl)
 $yPosControl += 90
 
 # Analysis Group
