@@ -13,9 +13,10 @@ This repository provides three complementary tools for comprehensive network mon
 
 1. **NetWatch.ps1** - Windows PowerShell script for continuous network monitoring (ping, DNS, adapter status)
 2. **fritzlog_pull.py** - Python script for logging FRITZ!Box router status via TR-064 API
-3. **analyze_netlogs.py** - Python script for analyzing collected logs and detecting network incidents
-4. **visualize_incidents.py** - Python script for generating graphical visualizations and HTML reports from incident data
-5. **NetWatchUI.ps1** - Windows Forms GUI for configuring, starting, stopping, analyzing, and visualizing network monitoring
+3. **fritzbox_restart.py** - Python script for sending restart commands to FRITZ!Box router via TR-064 API
+4. **analyze_netlogs.py** - Python script for analyzing collected logs and detecting network incidents
+5. **visualize_incidents.py** - Python script for generating graphical visualizations and HTML reports from incident data
+6. **NetWatchUI.ps1** - Windows Forms GUI for configuring, starting, stopping, analyzing, and visualizing network monitoring
 
 ## Prerequisites
 
@@ -27,7 +28,7 @@ This repository provides three complementary tools for comprehensive network mon
 ### For Python Scripts
 - Python 3.10 or higher
 - Required Python packages:
-  - `fritzconnection` (for fritzlog_pull.py)
+  - `fritzconnection` (for fritzlog_pull.py and fritzbox_restart.py)
   - `pandas` (optional, for analyze_netlogs.py - improves performance)
   - `matplotlib` (optional, for analyze_netlogs.py plotting features)
 
@@ -64,6 +65,7 @@ The easiest way to use the network monitoring tools is through the graphical use
   - Define analysis thresholds for latency and packet loss
 - **Control Tab**: Start, stop, and analyze monitoring
   - Start/Stop tracking with a single button click
+  - Restart FRITZ!Box router with one click (with confirmation dialog)
   - View real-time activity log
   - Run log analysis and generate incident reports
   - Generate graphical visualizations of incidents
@@ -144,6 +146,44 @@ python3 fritzlog_pull.py --host 192.168.178.1 --password YOUR_PASSWORD --interva
 CSV file with columns: timestamp, wan_connection_status, wan_uptime_s, wan_external_ip, wan_last_error, common_bytes_sent, common_bytes_recv, dsl_link_status.
 
 The script runs indefinitely until stopped with Ctrl+C. Output directory is created automatically if it doesn't exist.
+
+### fritzbox_restart.py - FRITZ!Box Restart
+
+Sends a restart command to FRITZ!Box router via TR-064 API. This is useful for automating router reboots or resetting the connection when troubleshooting network issues.
+
+**Basic usage:**
+```bash
+python3 fritzbox_restart.py --password YOUR_PASSWORD
+```
+
+**With custom parameters:**
+```bash
+python3 fritzbox_restart.py --host 192.168.178.1 --user admin --password YOUR_PASSWORD --timeout 10
+```
+
+**Skip confirmation prompt:**
+```bash
+python3 fritzbox_restart.py --password YOUR_PASSWORD --yes
+```
+
+**Parameters:**
+- `--host` - FRITZ!Box IP address (default: 192.168.178.1)
+- `--user` - FRITZ!Box username (optional)
+- `--password` - FRITZ!Box password (required)
+- `--timeout` - Connection timeout in seconds (default: 10)
+- `--yes` - Skip confirmation prompt
+
+**What it does:**
+- Connects to FRITZ!Box using TR-064 API
+- Sends DeviceConfig:1 Reboot command
+- Confirms success or reports errors
+- The router will reboot and be unavailable for 1-2 minutes
+
+**GUI Integration:**
+The restart functionality is integrated into NetWatchUI.ps1 in the Control tab as "Restart FRITZ!Box" button. The GUI automatically uses the credentials from the Configuration tab and displays a confirmation dialog before restarting.
+
+**Safety:**
+The script requires explicit confirmation (unless `--yes` flag is used) to prevent accidental reboots. When used via the GUI, a warning dialog is always shown.
 
 ### analyze_netlogs.py - Log Analyzer
 
@@ -279,6 +319,9 @@ Invoke-Pester .\NetWatch.Tests.ps1
 - **NetWatch.ps1** - PowerShell network monitoring script with CSV logging
 - **NetWatch.Tests.ps1** - Pester unit tests for NetWatch.ps1 functions
 - **fritzlog_pull.py** - FRITZ!Box TR-064 API logger
+- **fritzbox_restart.py** - FRITZ!Box restart command sender via TR-064 API
+- **test_fritzlog_pull.py** - Unit tests for fritzlog_pull.py
+- **test_fritzbox_restart.py** - Unit tests for fritzbox_restart.py
 - **analyze_netlogs.py** - Log analysis and incident detection tool
 - **visualize_incidents.py** - Incident visualization and HTML report generator
 - **.gitignore** - Excludes log files, cache, and build artifacts
