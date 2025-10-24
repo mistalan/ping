@@ -1,6 +1,9 @@
 package com.fritzbox.restart
 
+import android.content.Intent
 import android.os.Bundle
+import android.view.Menu
+import android.view.MenuItem
 import android.view.View
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
@@ -15,10 +18,31 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        
+        // Initialize LogManager
+        LogManager.init(this)
+        LogManager.log("MainActivity", "App started", android.util.Log.INFO)
+        
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
         setupUI()
+    }
+    
+    override fun onCreateOptionsMenu(menu: Menu): Boolean {
+        menuInflater.inflate(R.menu.main_menu, menu)
+        return true
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        return when (item.itemId) {
+            R.id.action_view_logs -> {
+                val intent = Intent(this, LogViewerActivity::class.java)
+                startActivity(intent)
+                true
+            }
+            else -> super.onOptionsItemSelected(item)
+        }
     }
 
     private fun setupUI() {
@@ -61,11 +85,15 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun performRestart(host: String, password: String) {
+        LogManager.log("MainActivity", "Starting restart operation for host: $host", android.util.Log.INFO)
+        
         lifecycleScope.launch {
             setLoading(true)
             updateStatus(getString(R.string.status_connecting), android.R.color.holo_blue_dark)
 
             try {
+                LogManager.log("MainActivity", "Creating FritzBoxClient", android.util.Log.DEBUG)
+                
                 // Create FritzBox client
                 val client = FritzBoxClient(
                     host = host,
@@ -81,6 +109,7 @@ class MainActivity : AppCompatActivity() {
 
                 result.fold(
                     onSuccess = { message ->
+                        LogManager.log("MainActivity", "Restart successful: $message", android.util.Log.INFO)
                         updateStatus(getString(R.string.status_success), android.R.color.holo_green_dark)
                         Toast.makeText(
                             this@MainActivity,
@@ -90,6 +119,7 @@ class MainActivity : AppCompatActivity() {
                     },
                     onFailure = { exception ->
                         val errorMessage = exception.message ?: getString(R.string.error_connection)
+                        LogManager.log("MainActivity", "Restart failed: $errorMessage", android.util.Log.ERROR)
                         updateStatus(getString(R.string.status_error, errorMessage), android.R.color.holo_red_dark)
                         Toast.makeText(
                             this@MainActivity,
@@ -100,6 +130,7 @@ class MainActivity : AppCompatActivity() {
                 )
             } catch (e: Exception) {
                 val errorMessage = e.message ?: getString(R.string.error_network)
+                LogManager.log("MainActivity", "Exception during restart: $errorMessage", android.util.Log.ERROR)
                 updateStatus(getString(R.string.status_error, errorMessage), android.R.color.holo_red_dark)
                 Toast.makeText(
                     this@MainActivity,

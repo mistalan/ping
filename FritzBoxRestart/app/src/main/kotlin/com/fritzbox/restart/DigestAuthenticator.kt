@@ -1,5 +1,6 @@
 package com.fritzbox.restart
 
+import android.util.Log
 import okhttp3.Authenticator
 import okhttp3.Request
 import okhttp3.Response
@@ -15,26 +16,49 @@ class DigestAuthenticator(
     private val password: String
 ) : Authenticator {
     
+    companion object {
+        private const val TAG = "DigestAuthenticator"
+    }
+    
     override fun authenticate(route: Route?, response: Response): Request? {
         // Only attempt digest auth once to avoid infinite loops
         if (responseCount(response) >= 3) {
+            Log.w(TAG, "Max authentication attempts reached (3)")
             return null
         }
         
-        val authHeader = response.header("WWW-Authenticate") ?: return null
+        Log.d(TAG, "Authentication attempt #${responseCount(response)}")
+        
+        val authHeader = response.header("WWW-Authenticate") ?: run {
+            Log.e(TAG, "No WWW-Authenticate header in response")
+            return null
+        }
+        
+        Log.d(TAG, "WWW-Authenticate header: $authHeader")
         
         if (!authHeader.startsWith("Digest ", ignoreCase = true)) {
+            Log.e(TAG, "Not a Digest authentication response")
             return null
         }
         
         val digestParams = parseDigestParams(authHeader)
-        val realm = digestParams["realm"] ?: return null
-        val nonce = digestParams["nonce"] ?: return null
+        Log.d(TAG, "Digest parameters: realm=${digestParams["realm"]}, qop=${digestParams["qop"]}")
+        
+        val realm = digestParams["realm"] ?: run {
+            Log.e(TAG, "Missing realm in digest params")
+            return null
+        }
+        val nonce = digestParams["nonce"] ?: run {
+            Log.e(TAG, "Missing nonce in digest params")
+            return null
+        }
         val qop = digestParams["qop"]
         val opaque = digestParams["opaque"]
         
         val method = response.request.method
         val uri = response.request.url.encodedPath
+        
+        Log.d(TAG, "Building auth response for $method $uri")
         
         // Generate response hash according to RFC 2617
         val ha1 = md5("$username:$realm:$password")
@@ -48,6 +72,8 @@ class DigestAuthenticator(
         } else {
             md5("$ha1:$nonce:$ha2")
         }
+        
+        Log.d(TAG, "Authentication hash generated successfully")
         
         // Build authorization header
         val authValue = buildString {
@@ -65,6 +91,8 @@ class DigestAuthenticator(
                 append(", opaque=\"$opaque\"")
             }
         }
+        
+        Log.d(TAG, "Authorization header built")
         
         return response.request.newBuilder()
             .header("Authorization", authValue)
