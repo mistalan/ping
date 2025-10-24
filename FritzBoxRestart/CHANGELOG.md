@@ -2,6 +2,27 @@
 
 All notable changes to the FRITZ!Box Restart Android app will be documented in this file.
 
+## [1.1.2] - 2025-10-24
+
+### Fixed
+- **HTTP 500 Error with "Action Not Authorized" (Error Code 606) - FINAL FIX**
+  - Fixed incorrect header format that was still causing error 606 even with Content-Type header
+  - The issue was that OkHttp was combining `content-type` and `charset` into a single header
+  - FRITZ!Box TR-064 API requires separate lowercase headers matching Python fritzconnection format
+  - Now sends headers exactly as Python fritzconnection does:
+    - `content-type: text/xml` (lowercase, separate)
+    - `charset: utf-8` (separate)
+    - `soapaction: urn:dslforum-org:service:DeviceConfig:1#Reboot`
+  - Previously sent: `Content-Type: text/xml; charset=utf-8` (combined, capitalized)
+  - This resolves the persistent error 606 "Action Not Authorized"
+
+### Technical Details
+- Modified `FritzBoxClient.kt` to use `.toByteArray().toRequestBody(null)` instead of `.toRequestBody("text/xml".toMediaType())`
+- Using `null` MediaType prevents OkHttp from automatically adding/combining Content-Type headers
+- Headers are now manually added with lowercase names to match Python fritzconnection exactly
+- Updated tests to verify headers are sent in correct format
+- All 13 unit tests passing with correct header validation
+
 ## [1.1.1] - 2025-10-24
 
 ### Fixed
@@ -12,6 +33,7 @@ All notable changes to the FRITZ!Box Restart Android app will be documented in t
   - This ensures the header is preserved through the OkHttp authentication chain
   - Matches the header format used by the Python fritzconnection library
   - Resolves UPnP error 606 "Action Not Authorized"
+  - **NOTE: This fix was incomplete - see v1.1.2 for the final fix**
 
 ### Added
 - **Comprehensive Unit Test Suite**

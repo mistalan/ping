@@ -120,13 +120,14 @@ class FritzBoxClient(
             LogManager.log(TAG, "  - Has XML declaration: ${soapBody.startsWith("<?xml")}", Log.DEBUG)
             LogManager.log(TAG, "  - Has closing tag: ${soapBody.contains("</u:$actionName>")}", Log.DEBUG)
 
-            // FRITZ!Box TR-064 API requires explicit Content-Type header for authorization
-            // Python fritzconnection uses: content-type: text/xml, charset: utf-8
-            // We must explicitly set Content-Type as OkHttp may not preserve it through auth chain
+            // FRITZ!Box TR-064 API requires explicit content-type header for authorization
+            // Python fritzconnection uses: content-type: text/xml, charset: utf-8 (separate lowercase headers)
+            // We must match the exact header format to avoid error 606 "Action Not Authorized"
+            // Note: We use null MediaType and manually add headers to avoid OkHttp combining them
             val request = Request.Builder()
                 .url("$baseUrl$controlUrl")
-                .post(soapBody.toRequestBody("text/xml".toMediaType()))
-                .addHeader("Content-Type", "text/xml; charset=utf-8")
+                .post(soapBody.toByteArray().toRequestBody(null))
+                .addHeader("content-type", "text/xml")
                 .addHeader("soapaction", soapAction)
                 .addHeader("charset", "utf-8")
                 .build()
