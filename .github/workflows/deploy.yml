@@ -79,6 +79,7 @@ jobs:
         run: ./gradlew assembleDebug --stacktrace
 
       - name: Verify APK build
+        shell: bash
         run: |
           if [ -f FritzBoxRestart/app/build/outputs/apk/debug/app-debug.apk ]; then
             echo "APK built successfully"
