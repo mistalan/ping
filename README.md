@@ -14,9 +14,10 @@ This repository provides three complementary tools for comprehensive network mon
 1. **NetWatch.ps1** - Windows PowerShell script for continuous network monitoring (ping, DNS, adapter status)
 2. **fritzlog_pull.py** - Python script for logging FRITZ!Box router status via TR-064 API
 3. **fritzbox_restart.py** - Python script for sending restart commands to FRITZ!Box router via TR-064 API
-4. **analyze_netlogs.py** - Python script for analyzing collected logs and detecting network incidents
-5. **visualize_incidents.py** - Python script for generating graphical visualizations and HTML reports from incident data
-6. **NetWatchUI.ps1** - Windows Forms GUI for configuring, starting, stopping, analyzing, and visualizing network monitoring
+4. **FritzBoxRestart/** - Android app for restarting FRITZ!Box router from your phone
+5. **analyze_netlogs.py** - Python script for analyzing collected logs and detecting network incidents
+6. **visualize_incidents.py** - Python script for generating graphical visualizations and HTML reports from incident data
+7. **NetWatchUI.ps1** - Windows Forms GUI for configuring, starting, stopping, analyzing, and visualizing network monitoring
 
 ## Prerequisites
 
@@ -31,6 +32,11 @@ This repository provides three complementary tools for comprehensive network mon
   - `fritzconnection` (for fritzlog_pull.py and fritzbox_restart.py)
   - `pandas` (optional, for analyze_netlogs.py - improves performance)
   - `matplotlib` (optional, for analyze_netlogs.py plotting features)
+
+### For Android App
+- Android 7.0 (API 24) or higher
+- FRITZ!Box router accessible on your local network
+- TR-064 API enabled on FRITZ!Box (usually enabled by default)
 
 ## Installation
 
@@ -185,6 +191,39 @@ The restart functionality is integrated into NetWatchUI.ps1 in the Control tab a
 **Safety:**
 The script requires explicit confirmation (unless `--yes` flag is used) to prevent accidental reboots. When used via the GUI, a warning dialog is always shown.
 
+### FritzBoxRestart/ - Android App
+
+A simple Android application to restart your FRITZ!Box router directly from your phone.
+
+**Features:**
+- Simple, clean user interface
+- Password input with show/hide toggle
+- Autofill support for password managers (Google/Samsung)
+- Fingerprint unlock support via password managers
+- Confirmation dialog before restart
+- Real-time status updates
+- No Play Store required - can be sideloaded
+
+**Installation:**
+1. Build the APK using Android Studio
+2. Transfer to your phone and install
+3. See `FritzBoxRestart/README.md` for detailed instructions
+
+**Usage:**
+1. Open the app
+2. Enter FRITZ!Box IP address (default: 192.168.178.1)
+3. Enter password (supports autofill from password managers)
+4. Tap "Restart FRITZ!Box"
+5. Confirm in the dialog
+6. Wait 1-2 minutes for reboot
+
+**Requirements:**
+- Android 7.0 (API 24) or higher
+- FRITZ!Box accessible on local network
+- TR-064 API enabled on FRITZ!Box
+
+For complete documentation, see [FritzBoxRestart/README.md](FritzBoxRestart/README.md).
+
 ### analyze_netlogs.py - Log Analyzer
 
 Analyzes NetWatch and FRITZ!Box logs to detect and report network incidents such as latency spikes, packet loss, disconnects, and configuration changes.
@@ -320,6 +359,7 @@ Invoke-Pester .\NetWatch.Tests.ps1
 - **NetWatch.Tests.ps1** - Pester unit tests for NetWatch.ps1 functions
 - **fritzlog_pull.py** - FRITZ!Box TR-064 API logger
 - **fritzbox_restart.py** - FRITZ!Box restart command sender via TR-064 API
+- **FritzBoxRestart/** - Android app for restarting FRITZ!Box from your phone
 - **test_fritzlog_pull.py** - Unit tests for fritzlog_pull.py
 - **test_fritzbox_restart.py** - Unit tests for fritzbox_restart.py
 - **analyze_netlogs.py** - Log analysis and incident detection tool
