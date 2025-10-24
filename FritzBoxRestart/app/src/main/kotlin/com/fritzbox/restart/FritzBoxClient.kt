@@ -114,11 +114,13 @@ class FritzBoxClient(
             LogManager.log(TAG, "  - Has XML declaration: ${soapBody.startsWith("<?xml")}", Log.DEBUG)
             LogManager.log(TAG, "  - Has closing tag: ${soapBody.contains("</u:$actionName>")}", Log.DEBUG)
 
-            // FRITZ!Box requires separate Content-Type and charset headers (non-standard HTTP)
-            // This matches the format used by the Python fritzconnection library
+            // FRITZ!Box TR-064 API requires explicit Content-Type header for authorization
+            // Python fritzconnection uses: content-type: text/xml, charset: utf-8
+            // We must explicitly set Content-Type as OkHttp may not preserve it through auth chain
             val request = Request.Builder()
                 .url("$baseUrl$controlUrl")
                 .post(soapBody.toRequestBody("text/xml".toMediaType()))
+                .addHeader("Content-Type", "text/xml; charset=utf-8")
                 .addHeader("soapaction", soapAction)
                 .addHeader("charset", "utf-8")
                 .build()

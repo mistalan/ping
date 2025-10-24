@@ -2,6 +2,23 @@
 
 All notable changes to the FRITZ!Box Restart Android app will be documented in this file.
 
+## [1.1.1] - 2025-10-24
+
+### Fixed
+- **HTTP 500 Error with "Action Not Authorized" (Error Code 606)**
+  - Fixed missing `Content-Type` header in HTTP requests
+  - The `Content-Type` header was not being sent, causing FRITZ!Box to reject the request
+  - Now explicitly sets `Content-Type: text/xml; charset=utf-8` header
+  - This ensures the header is preserved through the OkHttp authentication chain
+  - Matches the header format used by the Python fritzconnection library
+  - Resolves UPnP error 606 "Action Not Authorized"
+
+### Technical Details
+- Modified `FritzBoxClient.kt` to explicitly add `Content-Type` header
+- The header was being set via `RequestBody.toRequestBody()` but not preserved
+- Now uses `.addHeader("Content-Type", "text/xml; charset=utf-8")` to ensure it's sent
+- Combined with existing `charset: utf-8` header for compatibility
+
 ## [1.1.0] - 2025-10-24
 
 ### Added - Comprehensive Debugging and Diagnostic System
