@@ -87,14 +87,15 @@ jobs:
         run: ./gradlew assembleDebug --stacktrace
 
       - name: Verify APK build
+        shell: pwsh
         run: |
-          if [ -f FritzBoxRestart/app/build/outputs/apk/debug/app-debug.apk ]; then
-            echo "APK built successfully"
-            ls -lh FritzBoxRestart/app/build/outputs/apk/debug/app-debug.apk
-          else
-            echo "APK build failed"
+          if (Test-Path "FritzBoxRestart/app/build/outputs/apk/debug/app-debug.apk") {
+            Write-Host "APK built successfully"
+            Get-Item FritzBoxRestart/app/build/outputs/apk/debug/app-debug.apk | Select-Object Name, Length, LastWriteTime
+          } else {
+            Write-Host "APK build failed"
             exit 1
-          fi
+          }
 
       - name: Create release package
         shell: pwsh
