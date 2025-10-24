@@ -48,10 +48,11 @@ class MainActivity : AppCompatActivity() {
     private fun setupUI() {
         binding.restartButton.setOnClickListener {
             val host = binding.hostInput.text?.toString()?.trim() ?: ""
+            val username = binding.usernameInput.text?.toString()?.trim()
             val password = binding.passwordInput.text?.toString()?.trim() ?: ""
 
             if (validateInputs(host, password)) {
-                showConfirmationDialog(host, password)
+                showConfirmationDialog(host, username, password)
             }
         }
     }
@@ -72,19 +73,19 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun showConfirmationDialog(host: String, password: String) {
+    private fun showConfirmationDialog(host: String, username: String?, password: String) {
         AlertDialog.Builder(this)
             .setTitle(R.string.confirm_restart_title)
             .setMessage(getString(R.string.confirm_restart_message, host))
             .setPositiveButton(R.string.yes) { _, _ ->
-                performRestart(host, password)
+                performRestart(host, username, password)
             }
             .setNegativeButton(R.string.no, null)
             .setIcon(android.R.drawable.ic_dialog_alert)
             .show()
     }
 
-    private fun performRestart(host: String, password: String) {
+    private fun performRestart(host: String, username: String?, password: String) {
         LogManager.log("MainActivity", "Starting restart operation for host: $host", android.util.Log.INFO)
         
         // Collect system information
@@ -114,10 +115,10 @@ class MainActivity : AppCompatActivity() {
                 
                 LogManager.log("MainActivity", "Creating FritzBoxClient", android.util.Log.DEBUG)
                 
-                // Create FritzBox client
+                // Create FritzBox client with username if provided
                 val client = FritzBoxClient(
                     host = host,
-                    username = null, // Username is optional, most setups don't need it
+                    username = if (username.isNullOrBlank()) null else username,
                     password = password,
                     timeout = 10
                 )
@@ -188,6 +189,7 @@ class MainActivity : AppCompatActivity() {
     private fun setLoading(isLoading: Boolean) {
         binding.restartButton.isEnabled = !isLoading
         binding.hostInput.isEnabled = !isLoading
+        binding.usernameInput.isEnabled = !isLoading
         binding.passwordInput.isEnabled = !isLoading
         binding.progressBar.visibility = if (isLoading) View.VISIBLE else View.GONE
     }

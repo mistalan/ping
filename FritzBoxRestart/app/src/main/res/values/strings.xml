@@ -7,6 +7,8 @@
     <string name="host_hint">FRITZ!Box IP Address</string>
     <string name="default_host">192.168.178.1</string>
     
+    <string name="username_hint">Username (optional)</string>
+    
     <string name="password_hint">Password</string>
     
     <string name="restart_button">Restart FRITZ!Box</string>
