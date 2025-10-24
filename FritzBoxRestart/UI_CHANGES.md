@@ -81,7 +81,7 @@ The username field integrates seamlessly with the existing authentication mechan
    - Password (required)
    - Timeout (10 seconds)
 
-The `FritzBoxClient` class already handles the username parameter in its constructor, converting `null` to an empty string before passing it to `DigestAuthenticator`, which is the default behavior for most FRITZ!Box setups.
+The `FritzBoxClient` and `DigestAuthenticator` now properly handle `null` username values, matching the Python `fritzbox_restart.py` implementation where `user=None` is passed to `FritzConnection`. When username is `null`, it's converted to an empty string internally for the digest authentication hash calculation.
 
 ### Backward Compatibility
 

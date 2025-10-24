@@ -27,7 +27,7 @@ class FritzBoxClient(
         .connectTimeout(timeout.toLong(), TimeUnit.SECONDS)
         .readTimeout(timeout.toLong(), TimeUnit.SECONDS)
         .writeTimeout(timeout.toLong(), TimeUnit.SECONDS)
-        .authenticator(DigestAuthenticator(username ?: "", password))
+        .authenticator(DigestAuthenticator(username, password))
         .addInterceptor { chain ->
             val request = chain.request()
             logDetailedRequest(request)

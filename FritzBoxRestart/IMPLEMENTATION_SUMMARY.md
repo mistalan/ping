@@ -27,8 +27,14 @@ This implementation addresses the GitHub issue requesting:
 **Authentication Flow:**
 ```
 User Input → MainActivity → FritzBoxClient → DigestAuthenticator
-            (optional)      (null if blank)  (converted to "")
+            (optional)      (null if blank)  (null → "" internally)
 ```
+
+**Alignment with Python Implementation:**
+- Matches `fritzbox_restart.py` behavior where `user=None` is passed to `FritzConnection`
+- `DigestAuthenticator` now accepts nullable `String?` for username
+- Internally converts `null` to empty string for digest hash calculation
+- Ensures consistent behavior between Android and Python implementations
 
 ### 2. Log Viewer Layout Fix
 
@@ -65,14 +71,23 @@ Added new string resource in `strings.xml`:
    - Updated `performRestart()` signature and implementation (username handling)
    - Modified `setLoading()` to handle username field state (1 line)
 
-3. **FritzBoxRestart/app/src/main/res/layout/activity_log_viewer.xml**
+3. **FritzBoxRestart/app/src/main/kotlin/com/fritzbox/restart/FritzBoxClient.kt**
+   - Updated to pass `username` as nullable to `DigestAuthenticator`
+   - Removed conversion of `null` to empty string (now handled in DigestAuthenticator)
+
+4. **FritzBoxRestart/app/src/main/kotlin/com/fritzbox/restart/DigestAuthenticator.kt**
+   - Changed constructor to accept nullable `String?` for username parameter
+   - Added internal conversion of `null` to empty string for hash calculation
+   - Matches Python `fritzbox_restart.py` behavior
+
+5. **FritzBoxRestart/app/src/main/res/layout/activity_log_viewer.xml**
    - Restructured button layout from 1 row to 2 rows
    - Updated constraint references to new layout IDs
 
-4. **FritzBoxRestart/app/src/main/res/values/strings.xml**
+6. **FritzBoxRestart/app/src/main/res/values/strings.xml**
    - Added `username_hint` string resource
 
-5. **FritzBoxRestart/UI_CHANGES.md** (new file)
+7. **FritzBoxRestart/UI_CHANGES.md** (new file)
    - Comprehensive documentation of UI changes
    - Technical details and user experience improvements
 
