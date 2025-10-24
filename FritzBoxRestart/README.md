@@ -10,6 +10,8 @@ A simple Android application to restart your FRITZ!Box router with a single butt
 - ✅ Confirmation dialog before restart
 - ✅ Real-time status updates
 - ✅ Error handling with user-friendly messages
+- ✅ **Comprehensive logging system for debugging**
+- ✅ **Log viewer with share/copy functionality**
 - ✅ No Play Store integration required - sideload the APK
 
 ## Requirements
@@ -49,6 +51,30 @@ A simple Android application to restart your FRITZ!Box router with a single butt
 5. Confirm the restart in the dialog
 6. Wait 1-2 minutes for the router to reboot
 
+### Viewing Logs (for Debugging)
+
+The app includes a comprehensive logging system to help diagnose issues:
+
+1. Tap the **info icon** (ℹ️) in the top-right corner of the main screen
+2. This opens the **Log Viewer** showing all app activity
+3. You can:
+   - **Refresh**: Update logs with latest entries
+   - **Copy**: Copy logs to clipboard
+   - **Share**: Send logs via email/messaging apps
+   - **Clear**: Delete all logs
+
+**When to share logs:**
+- If you encounter HTTP 500 errors
+- Authentication failures
+- Connection timeouts
+- Any unexpected behavior
+
+The logs contain detailed information about:
+- SOAP requests sent to FRITZ!Box
+- Authentication attempts
+- HTTP response codes and messages
+- Error details with stack traces
+
 ## Configuration
 
 The app uses these default settings:
@@ -82,28 +108,52 @@ The app communicates with FRITZ!Box using the TR-064 protocol (UPnP-based):
 - Action: `Reboot`
 - Control URL: `http://{host}:49000/upnp/control/deviceconfig`
 
-The implementation uses SOAP/XML requests with HTTP basic authentication.
+The implementation uses SOAP/XML requests with HTTP Digest Authentication (RFC 2617).
+
+**Recent Fixes (v1.0.1):**
+- Fixed HTTP 500 error caused by incorrect SOAP envelope format
+- Updated SOAP headers to match TR-064 specification (lowercase `soapaction`)
+- Removed extraneous whitespace from SOAP body
+- Added comprehensive logging throughout the codebase
+- Created log viewer for easy debugging and issue reporting
 
 ## Troubleshooting
+
+### "HTTP 500: Internal Server Error"
+**This error has been fixed in v1.0.1**. If you still encounter it:
+- Make sure you have the latest version of the app
+- Check the logs (tap ℹ️ icon) for detailed error information
+- Verify TR-064 is enabled in FRITZ!Box settings
+- Try restarting your FRITZ!Box manually via web interface first
 
 ### "Authentication failed"
 - Check if your password is correct
 - Verify that TR-064 is enabled in FRITZ!Box settings (System > FRITZ!Box Users > Login to the Home Network)
 - Try using the web interface password
 - The app uses HTTP Digest Authentication which is the standard for FRITZ!Box TR-064 API
+- Check logs for detailed authentication error messages
 
 ### "Cannot reach FRITZ!Box"
 - Verify the IP address is correct
 - Make sure you're connected to the same network as the FRITZ!Box
 - Check if TR-064 is enabled in FRITZ!Box settings
+- Review logs to see the exact connection error
 
 ### "Connection timeout"
 - Check your network connection
 - Verify the FRITZ!Box is powered on and accessible
+- Try increasing timeout (currently 10 seconds)
 
 ### App won't install
 - Enable "Install from Unknown Sources" in Android settings
 - Make sure you have enough storage space
+
+### Getting Help
+If you encounter issues:
+1. Open the Log Viewer (ℹ️ icon)
+2. Try the operation that fails
+3. Share the logs via email/GitHub issue
+4. Include your FRITZ!Box model and Android version
 
 ## Building for Production
 
