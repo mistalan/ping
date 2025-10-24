@@ -54,7 +54,7 @@ class FritzBoxClientTest {
     }
 
     @Test
-    fun `reboot sends Content-Type header`() = runTest {
+    fun `reboot sends content-type header`() = runTest {
         // Arrange
         mockWebServer.enqueue(MockResponse().setResponseCode(200))
 
@@ -63,11 +63,13 @@ class FritzBoxClientTest {
 
         // Assert
         val request = mockWebServer.takeRequest()
-        assertNotNull("Content-Type header should be present", request.getHeader("Content-Type"))
+        // Check for lowercase content-type header (matches Python fritzconnection)
+        val contentType = request.getHeader("content-type")
+        assertNotNull("content-type header should be present", contentType)
         assertEquals(
-            "Content-Type should be text/xml; charset=utf-8",
-            "text/xml; charset=utf-8",
-            request.getHeader("Content-Type")
+            "content-type should be text/xml (separate from charset)",
+            "text/xml",
+            contentType
         )
     }
 
@@ -252,15 +254,20 @@ class FritzBoxClientTest {
         // Assert - This is the critical test for the bug fix
         val request = mockWebServer.takeRequest()
         
-        // Verify all three headers are present (the fix for issue #53)
-        assertNotNull("Content-Type header must be present", request.getHeader("Content-Type"))
-        assertNotNull("soapaction header must be present", request.getHeader("soapaction"))
-        assertNotNull("charset header must be present", request.getHeader("charset"))
+        // Verify all three headers are present (matching Python fritzconnection format)
+        // Python uses: content-type: text/xml, charset: utf-8, soapaction: ...
+        val contentType = request.getHeader("content-type")
+        val charset = request.getHeader("charset")
+        val soapaction = request.getHeader("soapaction")
         
-        // Verify exact values
-        assertEquals("text/xml; charset=utf-8", request.getHeader("Content-Type"))
-        assertEquals("urn:dslforum-org:service:DeviceConfig:1#Reboot", request.getHeader("soapaction"))
-        assertEquals("utf-8", request.getHeader("charset"))
+        assertNotNull("content-type header must be present", contentType)
+        assertNotNull("soapaction header must be present", soapaction)
+        assertNotNull("charset header must be present", charset)
+        
+        // Verify exact values match Python fritzconnection format
+        assertEquals("text/xml", contentType)
+        assertEquals("urn:dslforum-org:service:DeviceConfig:1#Reboot", soapaction)
+        assertEquals("utf-8", charset)
     }
 
     @Test
