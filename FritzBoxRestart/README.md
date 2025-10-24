@@ -214,6 +214,27 @@ If you encounter issues:
 3. **Include**: FRITZ!Box model, firmware version, Python test result
 4. See [TROUBLESHOOTING.md](TROUBLESHOOTING.md) for comprehensive debugging guide
 
+## Testing
+
+The app includes a comprehensive unit test suite to ensure reliability:
+
+### Running Tests
+
+```bash
+cd FritzBoxRestart
+./gradlew test
+```
+
+### Test Coverage
+
+- **13 unit tests** for `FritzBoxClient` class
+- Tests verify correct HTTP headers are sent (including Content-Type fix)
+- Tests validate SOAP envelope format
+- Tests cover success, error, and edge cases
+- **100% test success rate**
+
+For more details, see [app/src/test/kotlin/com/fritzbox/restart/README.md](app/src/test/kotlin/com/fritzbox/restart/README.md)
+
 ## Building for Production
 
 To create a production-ready APK:

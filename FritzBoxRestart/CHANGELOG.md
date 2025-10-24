@@ -2,6 +2,35 @@
 
 All notable changes to the FRITZ!Box Restart Android app will be documented in this file.
 
+## [1.1.1] - 2025-10-24
+
+### Fixed
+- **HTTP 500 Error with "Action Not Authorized" (Error Code 606)**
+  - Fixed missing `Content-Type` header in HTTP requests
+  - The `Content-Type` header was not being sent, causing FRITZ!Box to reject the request
+  - Now explicitly sets `Content-Type: text/xml; charset=utf-8` header
+  - This ensures the header is preserved through the OkHttp authentication chain
+  - Matches the header format used by the Python fritzconnection library
+  - Resolves UPnP error 606 "Action Not Authorized"
+
+### Added
+- **Comprehensive Unit Test Suite**
+  - 13 unit tests for `FritzBoxClient` covering all critical functionality
+  - Tests verify Content-Type header is always sent (regression prevention)
+  - Tests validate SOAP envelope format matches Python fritzconnection
+  - Tests cover success scenarios, error handling, and edge cases
+  - Uses MockWebServer for realistic HTTP testing
+  - All tests pass successfully with 100% success rate
+  - Test documentation in `app/src/test/kotlin/com/fritzbox/restart/README.md`
+
+### Technical Details
+- Modified `FritzBoxClient.kt` to explicitly add `Content-Type` header
+- The header was being set via `RequestBody.toRequestBody()` but not preserved
+- Now uses `.addHeader("Content-Type", "text/xml; charset=utf-8")` to ensure it's sent
+- Combined with existing `charset: utf-8` header for compatibility
+- Added test dependencies: kotlinx-coroutines-test, mockwebserver, mockito, robolectric
+- Modified `FritzBoxClient` to support port in host parameter for testing
+
 ## [1.1.0] - 2025-10-24
 
 ### Added - Comprehensive Debugging and Diagnostic System
