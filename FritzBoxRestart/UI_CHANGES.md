@@ -45,7 +45,7 @@ This document describes the UI changes made to the FRITZ!Box Restart Android app
 - Copy Button
 
 **Row 2:**
-- Share Button  
+- Share Button
 - Clear Button
 
 **Below the button rows:**
@@ -81,7 +81,7 @@ The username field integrates seamlessly with the existing authentication mechan
    - Password (required)
    - Timeout (10 seconds)
 
-The `DigestAuthenticator` class already supports username in its constructor, so no changes were needed there. It uses an empty string if username is `null`, which is the default behavior for most FRITZ!Box setups.
+The `FritzBoxClient` class already handles the username parameter in its constructor, converting `null` to an empty string before passing it to `DigestAuthenticator`, which is the default behavior for most FRITZ!Box setups.
 
 ### Backward Compatibility
 
