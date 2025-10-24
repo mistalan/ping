@@ -39,7 +39,13 @@ class FritzBoxClient(
         }
         .build()
 
-    private val baseUrl = "http://$host:49000"
+    private val baseUrl = if (host.contains(":")) {
+        // Host already includes port (used for testing)
+        "http://$host"
+    } else {
+        // Default TR-064 port
+        "http://$host:49000"
+    }
     
     /**
      * Log detailed HTTP request information
