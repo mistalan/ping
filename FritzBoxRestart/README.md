@@ -88,7 +88,9 @@ The implementation uses SOAP/XML requests with HTTP basic authentication.
 
 ### "Authentication failed"
 - Check if your password is correct
-- Some FRITZ!Box models require a username - try adding username support
+- Verify that TR-064 is enabled in FRITZ!Box settings (System > FRITZ!Box Users > Login to the Home Network)
+- Try using the web interface password
+- The app uses HTTP Digest Authentication which is the standard for FRITZ!Box TR-064 API
 
 ### "Cannot reach FRITZ!Box"
 - Verify the IP address is correct
