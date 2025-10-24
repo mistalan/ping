@@ -29,4 +29,12 @@
     <string name="error_connection">Connection failed. Please check host and password.</string>
     <string name="error_authentication">Authentication failed. Please check your password.</string>
     <string name="error_network">Network error. Please check your internet connection.</string>
+    
+    <!-- Log Viewer -->
+    <string name="view_logs">View Logs</string>
+    <string name="refresh">Refresh</string>
+    <string name="copy">Copy</string>
+    <string name="share">Share</string>
+    <string name="clear">Clear</string>
+    <string name="loading_logs">Loading logs…</string>
 </resources>
