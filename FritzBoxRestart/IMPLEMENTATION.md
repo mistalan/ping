@@ -33,7 +33,7 @@ The app uses the TR-064 protocol, which is based on UPnP (Universal Plug and Pla
 
 - **Transport**: HTTP (port 49000)
 - **Format**: SOAP/XML
-- **Authentication**: HTTP Basic Auth
+- **Authentication**: HTTP Digest Auth (RFC 2617)
 - **Service**: `urn:dslforum-org:service:DeviceConfig:1`
 - **Action**: `Reboot`
 - **Control URL**: `/upnp/control/deviceconfig`
@@ -55,11 +55,13 @@ The app uses the TR-064 protocol, which is based on UPnP (Universal Plug and Pla
 ```
 POST /upnp/control/deviceconfig HTTP/1.1
 Host: 192.168.178.1:49000
-Authorization: Basic [base64-encoded credentials]
+Authorization: Digest username="...", realm="...", nonce="...", uri="...", response="..."
 SOAPAction: urn:dslforum-org:service:DeviceConfig:1#Reboot
 Content-Type: text/xml; charset=utf-8
 Content-Length: [length]
 ```
+
+**Note**: The Authorization header is generated using HTTP Digest Authentication (RFC 2617). The DigestAuthenticator class handles the MD5 hashing and response generation automatically.
 
 ## Password Manager Integration
 
@@ -189,7 +191,7 @@ Benefits:
 - ⚠️ Uses HTTP (not HTTPS) because FRITZ!Box TR-064 typically uses HTTP
 - ✅ Communication limited to local network (typically 192.168.x.x)
 - ✅ No external server communication
-- ✅ Credentials sent via HTTP Basic Auth (base64, not encrypted)
+- ✅ Credentials sent via HTTP Digest Auth (more secure than Basic Auth)
 
 **Note**: This is acceptable for local network communication. For remote access, users should use FRITZ!Box's built-in VPN or MyFRITZ service.
 

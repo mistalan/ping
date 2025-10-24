@@ -2,7 +2,6 @@ package com.fritzbox.restart
 
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import okhttp3.Credentials
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -22,6 +21,7 @@ class FritzBoxClient(
         .connectTimeout(timeout.toLong(), TimeUnit.SECONDS)
         .readTimeout(timeout.toLong(), TimeUnit.SECONDS)
         .writeTimeout(timeout.toLong(), TimeUnit.SECONDS)
+        .authenticator(DigestAuthenticator(username ?: "", password))
         .build()
 
     private val baseUrl = "http://$host:49000"
@@ -45,14 +45,9 @@ class FritzBoxClient(
                 </s:Envelope>
             """.trimIndent()
 
-            val credentials = username?.let { 
-                Credentials.basic(it, password) 
-            } ?: Credentials.basic("", password)
-
             val request = Request.Builder()
                 .url("$baseUrl$controlUrl")
                 .post(soapBody.toRequestBody("text/xml; charset=utf-8".toMediaType()))
-                .addHeader("Authorization", credentials)
                 .addHeader("SOAPAction", soapAction)
                 .addHeader("Content-Type", "text/xml; charset=utf-8")
                 .build()
