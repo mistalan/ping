@@ -16,14 +16,15 @@ object LogManager {
     private const val MAX_LOG_SIZE = 500 * 1024 // 500 KB
     
     private var logFile: File? = null
-    private var context: Context? = null
     
     /**
      * Initialize the log manager with application context
+     * Note: We store the application context, not activity context, to avoid leaks
      */
     fun init(context: Context) {
-        this.context = context
-        logFile = File(context.getExternalFilesDir(null), LOG_FILE_NAME)
+        // Use application context to avoid memory leaks
+        val appContext = context.applicationContext
+        logFile = File(appContext.getExternalFilesDir(null), LOG_FILE_NAME)
         
         // Rotate log if it's too large
         logFile?.let { file ->
