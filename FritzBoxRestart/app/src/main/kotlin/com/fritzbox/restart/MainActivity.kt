@@ -87,11 +87,31 @@ class MainActivity : AppCompatActivity() {
     private fun performRestart(host: String, password: String) {
         LogManager.log("MainActivity", "Starting restart operation for host: $host", android.util.Log.INFO)
         
+        // Collect system information
+        val systemInfo = SystemInfoCollector.collectSystemInfo(this)
+        LogManager.log("MainActivity", systemInfo.toString(), android.util.Log.INFO)
+        
         lifecycleScope.launch {
             setLoading(true)
             updateStatus(getString(R.string.status_connecting), android.R.color.holo_blue_dark)
 
             try {
+                // Run network diagnostics first
+                LogManager.log("MainActivity", "Running network diagnostics...", android.util.Log.INFO)
+                val diagnostics = NetworkDiagnostics.runDiagnostics(this@MainActivity, host)
+                LogManager.log("MainActivity", diagnostics.toString(), android.util.Log.INFO)
+                
+                // Check for network issues
+                if (diagnostics.hasIssues()) {
+                    LogManager.log("MainActivity", "Network diagnostics found issues", android.util.Log.WARN)
+                    LogManager.log("MainActivity", diagnostics.getSuggestions(), android.util.Log.WARN)
+                    
+                    // Still continue with the request, but log the warnings
+                    updateStatus("Network issues detected. Check logs for details.", android.R.color.holo_orange_dark)
+                } else {
+                    LogManager.log("MainActivity", "Network diagnostics: All checks passed", android.util.Log.INFO)
+                }
+                
                 LogManager.log("MainActivity", "Creating FritzBoxClient", android.util.Log.DEBUG)
                 
                 // Create FritzBox client
@@ -120,10 +140,29 @@ class MainActivity : AppCompatActivity() {
                     onFailure = { exception ->
                         val errorMessage = exception.message ?: getString(R.string.error_connection)
                         LogManager.log("MainActivity", "Restart failed: $errorMessage", android.util.Log.ERROR)
+                        
+                        // Log additional troubleshooting information
+                        LogManager.log("MainActivity", "=== TROUBLESHOOTING INFO ===", android.util.Log.ERROR)
+                        LogManager.log("MainActivity", "Network diagnostics: ${if (diagnostics.hasIssues()) "ISSUES FOUND" else "OK"}", android.util.Log.ERROR)
+                        if (diagnostics.hasIssues()) {
+                            LogManager.log("MainActivity", diagnostics.getSuggestions(), android.util.Log.ERROR)
+                        }
+                        LogManager.log("MainActivity", "============================", android.util.Log.ERROR)
+                        
                         updateStatus(getString(R.string.status_error, errorMessage), android.R.color.holo_red_dark)
+                        
+                        // Show detailed error with suggestion to check logs
+                        val fullMessage = buildString {
+                            append(errorMessage)
+                            append("\n\nTap ℹ️ in menu to view detailed logs.")
+                            if (diagnostics.hasIssues()) {
+                                append("\n\nNetwork issues detected - check logs for troubleshooting.")
+                            }
+                        }
+                        
                         Toast.makeText(
                             this@MainActivity,
-                            errorMessage,
+                            fullMessage,
                             Toast.LENGTH_LONG
                         ).show()
                     }
@@ -131,10 +170,13 @@ class MainActivity : AppCompatActivity() {
             } catch (e: Exception) {
                 val errorMessage = e.message ?: getString(R.string.error_network)
                 LogManager.log("MainActivity", "Exception during restart: $errorMessage", android.util.Log.ERROR)
+                val stackTrace = e.stackTraceToString()
+                LogManager.log("MainActivity", "Stack trace:\n$stackTrace", android.util.Log.ERROR)
+                
                 updateStatus(getString(R.string.status_error, errorMessage), android.R.color.holo_red_dark)
                 Toast.makeText(
                     this@MainActivity,
-                    errorMessage,
+                    "$errorMessage\n\nTap ℹ️ to view logs.",
                     Toast.LENGTH_LONG
                 ).show()
             } finally {
