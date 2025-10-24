@@ -2,15 +2,25 @@
 
 All notable changes to the FRITZ!Box Restart Android app will be documented in this file.
 
+## [1.0.2] - 2025-10-24
+
+### Fixed
+- **HTTP 500 Internal Server Error** when restarting FRITZ!Box (second fix)
+  - Fixed HTTP headers to match exact format expected by FRITZ!Box TR-064 API
+  - Changed from combined `Content-Type: text/xml; charset=utf-8` header to separate headers
+  - Now sends `Content-Type: text/xml` and `charset: utf-8` as separate headers
+  - This non-standard header format matches the Python `fritzconnection` library exactly
+  - Previous fix in v1.0.1 addressed SOAP envelope format but headers were still incorrect
+
 ## [1.0.1] - 2025-10-24
 
 ### Fixed
-- **HTTP 500 Internal Server Error** when restarting FRITZ!Box
+- **HTTP 500 Internal Server Error** when restarting FRITZ!Box (first attempt)
   - Fixed SOAP envelope format to match TR-064 specification exactly
   - Changed SOAP header from `SOAPAction` to `soapaction` (lowercase)
-  - Updated Content-Type header to separate `text/xml` and `charset=utf-8`
   - Removed extraneous whitespace from SOAP body that caused parsing errors
   - SOAP envelope now matches format used by `fritzconnection` Python library
+  - Note: This fix was incomplete; v1.0.2 addresses the remaining header issue
 
 ### Added
 - **Comprehensive logging system**
