@@ -54,10 +54,8 @@ class FritzBoxClient(
 
             val request = Request.Builder()
                 .url("$baseUrl$controlUrl")
-                .post(soapBody.toRequestBody("text/xml".toMediaType()))
+                .post(soapBody.toRequestBody("text/xml; charset=utf-8".toMediaType()))
                 .addHeader("soapaction", soapAction)
-                .addHeader("content-type", "text/xml")
-                .addHeader("charset", "utf-8")
                 .build()
 
             Log.d(TAG, "Sending request...")

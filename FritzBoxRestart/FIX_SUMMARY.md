@@ -12,15 +12,7 @@ After analyzing the code and comparing it with the working Python implementation
 
 1. **SOAP Header Case Sensitivity**: The app used `SOAPAction` (uppercase) header, but FRITZ!Box TR-064 API expects `soapaction` (lowercase)
 
-2. **Incorrect Content-Type Format**: The app used:
-   ```
-   Content-Type: text/xml; charset=utf-8
-   ```
-   But FRITZ!Box expects separate headers:
-   ```
-   content-type: text/xml
-   charset: utf-8
-   ```
+2. **Incorrect SOAP Headers**: The original implementation had issues with header format and capitalization.
 
 3. **SOAP Envelope Whitespace**: The SOAP XML had extraneous whitespace and line breaks:
    ```xml
@@ -46,12 +38,12 @@ After analyzing the code and comparing it with the working Python implementation
   <?xml version="1.0" encoding="utf-8"?><s:Envelope s:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" xmlns:s="http://schemas.xmlsoap.org/soap/envelope/"><s:Body><u:Reboot xmlns:u="urn:dslforum-org:service:DeviceConfig:1"></u:Reboot></s:Body></s:Envelope>
   ```
 
-- Updated headers to use lowercase and separate charset:
+- Updated headers to use lowercase `soapaction`:
   ```kotlin
+  .post(soapBody.toRequestBody("text/xml; charset=utf-8".toMediaType()))
   .addHeader("soapaction", soapAction)
-  .addHeader("content-type", "text/xml")
-  .addHeader("charset", "utf-8")
   ```
+  OkHttp automatically sets the Content-Type header from the RequestBody media type.
 
 ### 2. Added Comprehensive Logging
 
