@@ -110,17 +110,20 @@ The app communicates with FRITZ!Box using the TR-064 protocol (UPnP-based):
 
 The implementation uses SOAP/XML requests with HTTP Digest Authentication (RFC 2617).
 
-**Recent Fixes (v1.0.1):**
-- Fixed HTTP 500 error caused by incorrect SOAP envelope format
-- Updated SOAP headers to match TR-064 specification (lowercase `soapaction`)
-- Removed extraneous whitespace from SOAP body
-- Added comprehensive logging throughout the codebase
-- Created log viewer for easy debugging and issue reporting
+**Recent Fixes:**
+- **v1.0.2** (Latest): Fixed HTTP headers to use separate charset header instead of combined Content-Type
+  - Changed from: `Content-Type: text/xml; charset=utf-8`
+  - Changed to: `Content-Type: text/xml` + separate `charset: utf-8` header
+  - This non-standard header format matches the Python fritzconnection library exactly
+  - **This should resolve all remaining HTTP 500 errors**
+- **v1.0.1**: Fixed SOAP envelope format (single-line, lowercase soapaction header)
+  - Added comprehensive logging throughout the codebase
+  - Created log viewer for easy debugging and issue reporting
 
 ## Troubleshooting
 
 ### "HTTP 500: Internal Server Error"
-**This error has been fixed in v1.0.1**. If you still encounter it:
+**This error has been fixed in v1.0.2**. If you still encounter it:
 - Make sure you have the latest version of the app
 - Check the logs (tap ℹ️ icon) for detailed error information
 - Verify TR-064 is enabled in FRITZ!Box settings

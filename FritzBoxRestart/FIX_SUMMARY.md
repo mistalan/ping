@@ -1,5 +1,48 @@
 # HTTP 500 Error Fix - Technical Summary
 
+## Latest Update (v1.0.2 - 2025-10-24)
+
+### New Root Cause Discovered
+
+The HTTP 500 error persisted even after the v1.0.1 fix. Further analysis revealed that FRITZ!Box TR-064 API requires HTTP headers in a **non-standard format**.
+
+### The Real Issue: Header Format
+
+The Python `fritzconnection` library (which works correctly) sends **THREE separate HTTP headers**:
+```
+soapaction: urn:dslforum-org:service:DeviceConfig:1#Reboot
+content-type: text/xml
+charset: utf-8
+```
+
+The Android app was using the standard HTTP approach with a combined Content-Type header:
+```
+Content-Type: text/xml; charset=utf-8
+```
+
+While this is the correct HTTP standard, **FRITZ!Box rejects it with HTTP 500**.
+
+### Solution (v1.0.2)
+
+**File: `FritzBoxClient.kt`**
+
+Changed from combined header:
+```kotlin
+.post(soapBody.toRequestBody("text/xml; charset=utf-8".toMediaType()))
+.addHeader("soapaction", soapAction)
+```
+
+To separate headers matching Python library:
+```kotlin
+.post(soapBody.toRequestBody("text/xml".toMediaType()))
+.addHeader("soapaction", soapAction)
+.addHeader("charset", "utf-8")
+```
+
+This sends charset as a separate HTTP header, exactly matching the Python `fritzconnection` library's behavior.
+
+---
+
 ## Problem Statement
 
 The FRITZ!Box Restart Android app was encountering an **HTTP 500: Internal Server Error** when attempting to restart the FRITZ!Box router. Additionally, there was no logging mechanism for users to debug issues or provide detailed error reports.
@@ -38,12 +81,13 @@ After analyzing the code and comparing it with the working Python implementation
   <?xml version="1.0" encoding="utf-8"?><s:Envelope s:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" xmlns:s="http://schemas.xmlsoap.org/soap/envelope/"><s:Body><u:Reboot xmlns:u="urn:dslforum-org:service:DeviceConfig:1"></u:Reboot></s:Body></s:Envelope>
   ```
 
-- Updated headers to use lowercase `soapaction`:
+- Updated headers to use lowercase `soapaction` and separate charset:
   ```kotlin
-  .post(soapBody.toRequestBody("text/xml; charset=utf-8".toMediaType()))
+  .post(soapBody.toRequestBody("text/xml".toMediaType()))
   .addHeader("soapaction", soapAction)
+  .addHeader("charset", "utf-8")
   ```
-  OkHttp automatically sets the Content-Type header from the RequestBody media type.
+  Note: v1.0.1 initially used combined `text/xml; charset=utf-8`, which was corrected in v1.0.2.
 
 ### 2. Added Comprehensive Logging
 
@@ -223,6 +267,11 @@ After analyzing the code and comparing it with the working Python implementation
 
 ## Version
 
-**Version**: 1.0.1
+**Version**: 1.0.2
 **Date**: 2025-10-24
 **Status**: ✅ Complete, ready for testing
+
+### Version History
+- **v1.0.2**: Fixed HTTP headers to use separate charset header (final fix for HTTP 500)
+- **v1.0.1**: Fixed SOAP envelope format and added logging (incomplete fix)
+- **v1.0.0**: Initial release
