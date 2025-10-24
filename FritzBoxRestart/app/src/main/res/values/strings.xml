@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">FRITZ!Box Restart</string>
+    <string name="app_title">FRITZ!Box Restart</string>
+    <string name="app_icon_desc">FRITZ!Box icon</string>
+    
+    <string name="host_hint">FRITZ!Box IP Address</string>
+    <string name="default_host">192.168.178.1</string>
+    
+    <string name="password_hint">Password</string>
+    
+    <string name="restart_button">Restart FRITZ!Box</string>
+    
+    <string name="help_text">Enter your FRITZ!Box password and tap the restart button. The router will reboot and be unavailable for 1-2 minutes.</string>
+    
+    <string name="confirm_restart_title">Restart FRITZ!Box?</string>
+    <string name="confirm_restart_message">Are you sure you want to restart your FRITZ!Box?\n\nHost: %1$s\n\nThis will interrupt your internet connection for 1-2 minutes.</string>
+    <string name="yes">Yes</string>
+    <string name="no">No</string>
+    
+    <string name="status_connecting">Connecting to FRITZ!Box…</string>
+    <string name="status_sending_command">Sending restart command…</string>
+    <string name="status_success">Restart command sent successfully!</string>
+    <string name="status_restarting">FRITZ!Box is restarting. Please wait 1-2 minutes.</string>
+    <string name="status_error">Error: %1$s</string>
+    
+    <string name="error_empty_password">Please enter your FRITZ!Box password</string>
+    <string name="error_empty_host">Please enter FRITZ!Box IP address</string>
+    <string name="error_connection">Connection failed. Please check host and password.</string>
+    <string name="error_authentication">Authentication failed. Please check your password.</string>
+    <string name="error_network">Network error. Please check your internet connection.</string>
+</resources>

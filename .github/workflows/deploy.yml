@@ -62,6 +62,32 @@ jobs:
             exit 1
           }
 
+      - name: Set up JDK 17 for Android
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x FritzBoxRestart/gradlew
+
+      - name: Build Android APK
+        working-directory: FritzBoxRestart
+        run: ./gradlew assembleDebug --stacktrace
+
+      - name: Verify APK build
+        run: |
+          if [ -f FritzBoxRestart/app/build/outputs/apk/debug/app-debug.apk ]; then
+            echo "APK built successfully"
+            ls -lh FritzBoxRestart/app/build/outputs/apk/debug/app-debug.apk
+          else
+            echo "APK build failed"
+            exit 1
+          fi
+
       - name: Create deployment package
         shell: pwsh
         run: |
@@ -71,8 +97,20 @@ jobs:
           Copy-Item NetWatch.ps1 package/
           Copy-Item NetWatchUI.ps1 package/
           Copy-Item fritzlog_pull.py package/
+          Copy-Item fritzbox_restart.py package/
           Copy-Item analyze_netlogs.py package/
+          Copy-Item visualize_incidents.py package/
           Copy-Item README.md package/
+          
+          # Copy Android APK if it exists
+          if (Test-Path "FritzBoxRestart/app/build/outputs/apk/debug/app-debug.apk") {
+            New-Item -ItemType Directory -Force -Path package/android | Out-Null
+            Copy-Item FritzBoxRestart/app/build/outputs/apk/debug/app-debug.apk package/android/fritzbox-restart.apk
+            Copy-Item FritzBoxRestart/README.md package/android/
+            Write-Host "[INFO] Android APK included in package"
+          } else {
+            Write-Host "[WARNING] Android APK not found, skipping"
+          }
           
           # Create requirements.txt
           "fritzconnection>=1.15.0" | Out-File -FilePath package/requirements.txt -Encoding utf8
@@ -192,10 +230,16 @@ jobs:
           Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value "- NetWatchUI.ps1 (Main UI - Recommended)"
           Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value "- NetWatch.ps1"
           Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value "- fritzlog_pull.py"
+          Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value "- fritzbox_restart.py"
           Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value "- analyze_netlogs.py"
+          Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value "- visualize_incidents.py"
           Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value "- README.md"
           Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value "- requirements.txt"
           Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value "- QUICKSTART.md"
+          if (Test-Path "package/android/fritzbox-restart.apk") {
+            Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value "- android/fritzbox-restart.apk (Android App)"
+            Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value "- android/README.md"
+          }
           Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value ""
           Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value "**Checksums:**"
           Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value '```'

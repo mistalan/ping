@@ -63,9 +63,38 @@ jobs:
       - name: Validate Python scripts
         run: |
           python -m py_compile fritzlog_pull.py
+          python -m py_compile fritzbox_restart.py
           python -m py_compile analyze_netlogs.py
+          python -m py_compile visualize_incidents.py
           python -c "import fritzlog_pull"
+          python -c "import fritzbox_restart"
           python -c "import analyze_netlogs"
+
+      - name: Set up JDK 17 for Android
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x FritzBoxRestart/gradlew
+
+      - name: Build Android APK
+        working-directory: FritzBoxRestart
+        run: ./gradlew assembleDebug --stacktrace
+
+      - name: Verify APK build
+        run: |
+          if [ -f FritzBoxRestart/app/build/outputs/apk/debug/app-debug.apk ]; then
+            echo "APK built successfully"
+            ls -lh FritzBoxRestart/app/build/outputs/apk/debug/app-debug.apk
+          else
+            echo "APK build failed"
+            exit 1
+          fi
 
       - name: Create release package
         shell: pwsh
@@ -74,8 +103,21 @@ jobs:
           Copy-Item NetWatchUI.ps1 release/
           Copy-Item NetWatch.ps1 release/
           Copy-Item fritzlog_pull.py release/
+          Copy-Item fritzbox_restart.py release/
           Copy-Item analyze_netlogs.py release/
+          Copy-Item visualize_incidents.py release/
           Copy-Item README.md release/
+          
+          # Copy Android APK if it exists
+          if (Test-Path "FritzBoxRestart/app/build/outputs/apk/debug/app-debug.apk") {
+            New-Item -ItemType Directory -Force -Path release/android | Out-Null
+            Copy-Item FritzBoxRestart/app/build/outputs/apk/debug/app-debug.apk release/android/fritzbox-restart.apk
+            Copy-Item FritzBoxRestart/README.md release/android/
+            Copy-Item FritzBoxRestart/QUICKSTART.md release/android/
+            Write-Host "[INFO] Android APK included in release"
+          } else {
+            Write-Host "[WARNING] Android APK not found, skipping"
+          }
           
           # Create a requirements.txt for Python dependencies
           "fritzconnection>=1.15.0" | Out-File -FilePath release/requirements.txt -Encoding utf8
@@ -155,11 +197,24 @@ jobs:
           - **NetWatchUI.ps1** - Graphical UI for easy configuration and control (Recommended)
           - **NetWatch.ps1** - Windows PowerShell network monitoring script
           - **fritzlog_pull.py** - FRITZ!Box router status logger
+          - **fritzbox_restart.py** - FRITZ!Box restart script
           - **analyze_netlogs.py** - Log analysis and incident detection tool
+          - **visualize_incidents.py** - Incident visualization and HTML report generator
+          - **android/fritzbox-restart.apk** - Android app to restart FRITZ!Box from your phone
           
           ### Installation
           
           Download either the `.zip` or `.tar.gz` archive and extract it. See `INSTALL.md` for detailed installation instructions.
+          
+          ### Android App
+          
+          The Android app is included in the `android/` folder:
+          1. Transfer `android/fritzbox-restart.apk` to your Android device (7.0+)
+          2. Enable "Install from Unknown Sources" in Android settings
+          3. Install the APK
+          4. Open app, enter FRITZ!Box password, and tap restart
+          
+          See `android/README.md` and `android/QUICKSTART.md` for detailed instructions.
           
           ### Requirements
           
@@ -174,6 +229,10 @@ jobs:
           **For Python scripts:**
           - Python 3.12 or higher
           - Dependencies: `fritzconnection` (install via `pip install -r requirements.txt`)
+          
+          **For Android app:**
+          - Android 7.0 (API 24) or higher
+          - FRITZ!Box accessible on local network
           
           ### Quick Start
           
@@ -191,8 +250,14 @@ jobs:
           # Run FRITZ!Box logger
           python3 fritzlog_pull.py --password YOUR_PASSWORD
           
+          # Restart FRITZ!Box from command line
+          python3 fritzbox_restart.py --password YOUR_PASSWORD
+          
           # Analyze logs
           python3 analyze_netlogs.py --netwatch netwatch_log.csv --fritz fritz_log.csv
+          
+          # Generate visualizations
+          python3 visualize_incidents.py --input incidents.csv --html
           ```
           
           ### Checksums
