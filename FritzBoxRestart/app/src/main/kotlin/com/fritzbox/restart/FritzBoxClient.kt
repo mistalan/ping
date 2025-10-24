@@ -52,12 +52,16 @@ class FritzBoxClient(
             Log.d(TAG, "SOAP Action: $soapAction")
             Log.d(TAG, "SOAP Body: $soapBody")
 
+            // FRITZ!Box requires separate Content-Type and charset headers (non-standard HTTP)
+            // This matches the format used by the Python fritzconnection library
             val request = Request.Builder()
                 .url("$baseUrl$controlUrl")
-                .post(soapBody.toRequestBody("text/xml; charset=utf-8".toMediaType()))
+                .post(soapBody.toRequestBody("text/xml".toMediaType()))
                 .addHeader("soapaction", soapAction)
+                .addHeader("charset", "utf-8")
                 .build()
 
+            Log.d(TAG, "Headers: Content-Type=text/xml, charset=utf-8, soapaction=$soapAction")
             Log.d(TAG, "Sending request...")
             val response = client.newCall(request).execute()
             
