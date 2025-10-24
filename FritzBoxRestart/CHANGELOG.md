@@ -2,6 +2,87 @@
 
 All notable changes to the FRITZ!Box Restart Android app will be documented in this file.
 
+## [1.1.0] - 2025-10-24
+
+### Added - Comprehensive Debugging and Diagnostic System
+
+This release adds extensive diagnostic capabilities to help identify and resolve the persistent HTTP 500 error that some users experience.
+
+#### New Features:
+
+1. **Diagnostic Report Generator**
+   - Generates comprehensive diagnostic reports with one tap
+   - Includes system information, network diagnostics, and all logs
+   - Provides comparison with working Python client
+   - Includes troubleshooting checklist and suggestions
+   - Can be shared directly from the app
+
+2. **Network Diagnostics**
+   - Automatic network connectivity tests before each request
+   - DNS resolution check
+   - Host reachability test (ping)
+   - Port accessibility tests (TR-064 port 49000, HTTP 80, HTTPS 443)
+   - Provides troubleshooting suggestions based on test results
+
+3. **System Information Collector**
+   - Collects app version, Android version, SDK level
+   - Device manufacturer, model, brand information
+   - Hardware details and supported ABIs
+   - Automatically included in diagnostic reports
+
+4. **Enhanced HTTP Logging**
+   - Detailed logging of all HTTP requests and responses
+   - Complete header logging (with password redaction)
+   - Request/response body logging
+   - Request duration tracking
+   - SOAP fault parsing for detailed error messages
+
+5. **SOAP Envelope Validation**
+   - Validates SOAP envelope format matches Python client
+   - Checks for single-line format, XML declaration, closing tags
+   - Logs envelope length and format details
+
+6. **Enhanced Error Messages**
+   - More specific error messages with troubleshooting hints
+   - Suggests checking logs for HTTP 500 errors
+   - Includes network diagnostic results in error flow
+   - Full stack traces logged for unexpected errors
+
+7. **Updated Log Viewer**
+   - New "Generate Diagnostic Report" button
+   - Progress indicator during report generation
+   - Option to view or share diagnostic reports
+   - Enhanced menu with diagnostic option
+
+8. **Comprehensive Documentation**
+   - New TROUBLESHOOTING.md guide with step-by-step debugging
+   - Updated README with diagnostic report instructions
+   - Information checklist for reporting issues
+   - Comparison guide with Python client
+
+### Changed
+- MainActivity now runs network diagnostics before each request
+- Error messages now suggest viewing logs
+- Log viewer layout updated with diagnostic button
+- Enhanced troubleshooting section in README
+
+### Technical Details
+- New files: NetworkDiagnostics.kt, SystemInfoCollector.kt, DiagnosticReportGenerator.kt
+- OkHttp interceptor added for request/response logging
+- SOAP fault parsing for better error details
+- Network permission handling for diagnostics
+
+### For Users Experiencing HTTP 500 Errors
+
+This release provides all the tools needed to identify why the error occurs:
+
+1. **Generate a diagnostic report** (tap ℹ️ → Generate Diagnostic Report)
+2. **Test with Python script** to confirm TR-064 works
+3. **Share the diagnostic report** when reporting the issue
+4. **Include**: FRITZ!Box model, firmware version, Python test result
+
+See [TROUBLESHOOTING.md](TROUBLESHOOTING.md) for detailed instructions.
+
 ## [1.0.2] - 2025-10-24
 
 ### Fixed
