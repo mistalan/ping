@@ -12,6 +12,10 @@ A simple Android application to restart your FRITZ!Box router with a single butt
 - ✅ Error handling with user-friendly messages
 - ✅ **Comprehensive logging system for debugging**
 - ✅ **Log viewer with share/copy functionality**
+- ✅ **Diagnostic report generator with network tests**
+- ✅ **System information collector**
+- ✅ **Detailed HTTP request/response logging**
+- ✅ **SOAP envelope validation and comparison**
 - ✅ No Play Store integration required - sideload the APK
 
 ## Requirements
@@ -53,7 +57,7 @@ A simple Android application to restart your FRITZ!Box router with a single butt
 
 ### Viewing Logs (for Debugging)
 
-The app includes a comprehensive logging system to help diagnose issues:
+The app includes a comprehensive logging and diagnostic system to help diagnose issues:
 
 1. Tap the **info icon** (ℹ️) in the top-right corner of the main screen
 2. This opens the **Log Viewer** showing all app activity
@@ -62,18 +66,38 @@ The app includes a comprehensive logging system to help diagnose issues:
    - **Copy**: Copy logs to clipboard
    - **Share**: Send logs via email/messaging apps
    - **Clear**: Delete all logs
+   - **Generate Diagnostic Report**: Run comprehensive diagnostics
 
-**When to share logs:**
-- If you encounter HTTP 500 errors
+#### Diagnostic Report (New!)
+
+The diagnostic report feature helps identify the root cause of issues:
+
+1. In the Log Viewer, tap **"Generate Diagnostic Report"**
+2. Enter your FRITZ!Box IP address
+3. The app will run comprehensive tests:
+   - Network connectivity check
+   - DNS resolution test
+   - Host reachability (ping)
+   - Port accessibility (TR-064 port 49000)
+   - System information collection
+4. Review or share the complete diagnostic report
+
+**The report includes:**
+- System information (Android version, device model, app version)
+- Network diagnostics (connectivity, DNS, ping, ports)
+- Comparison with working Python implementation
+- Troubleshooting checklist
+- All application logs with detailed HTTP request/response info
+- Suggested next steps
+
+**When to generate a diagnostic report:**
+- HTTP 500 errors (server errors)
 - Authentication failures
-- Connection timeouts
+- Connection issues
 - Any unexpected behavior
+- Before reporting an issue on GitHub
 
-The logs contain detailed information about:
-- SOAP requests sent to FRITZ!Box
-- Authentication attempts
-- HTTP response codes and messages
-- Error details with stack traces
+The diagnostic report is designed to give developers all the information needed to identify and fix the issue.
 
 ## Configuration
 
@@ -123,11 +147,42 @@ The implementation uses SOAP/XML requests with HTTP Digest Authentication (RFC 2
 ## Troubleshooting
 
 ### "HTTP 500: Internal Server Error"
-**This error has been fixed in v1.0.2**. If you still encounter it:
-- Make sure you have the latest version of the app
-- Check the logs (tap ℹ️ icon) for detailed error information
-- Verify TR-064 is enabled in FRITZ!Box settings
-- Try restarting your FRITZ!Box manually via web interface first
+
+**If you encounter this error**, the app now includes comprehensive diagnostic tools to help identify the root cause:
+
+#### Quick Steps:
+1. **Generate Diagnostic Report**:
+   - Open the app
+   - Tap the **ℹ️ (info)** icon in the top right
+   - Tap **"Generate Diagnostic Report"**
+   - Enter your FRITZ!Box IP address
+   - Wait for the report to generate
+   - **Share** the report when asking for help
+
+2. **Test with Python Script** (helps confirm if issue is Android-specific):
+   ```bash
+   pip install fritzconnection
+   python3 fritzbox_restart.py --host 192.168.178.1 --password YOUR_PASSWORD --yes
+   ```
+   - If Python works but Android fails → Issue is in Android implementation
+   - If both fail → Issue is with FRITZ!Box TR-064 configuration
+
+3. **Check Network Diagnostics**:
+   - The diagnostic report includes network tests
+   - Verify all checks pass (network, DNS, ping, port 49000)
+
+4. **Review Detailed Logs**:
+   - Look for "=== HTTP REQUEST ===" and "=== HTTP RESPONSE ===" sections
+   - Compare SOAP envelope format with Python client
+
+#### When Reporting This Issue:
+Please include:
+- **Diagnostic report** (generated in the app)
+- **FRITZ!Box model and firmware version**
+- **Python test result** (works/fails)
+- **Any error messages from FRITZ!Box event log**
+
+See [TROUBLESHOOTING.md](TROUBLESHOOTING.md) for detailed debugging guide.
 
 ### "Authentication failed"
 - Check if your password is correct
@@ -140,6 +195,7 @@ The implementation uses SOAP/XML requests with HTTP Digest Authentication (RFC 2
 - Verify the IP address is correct
 - Make sure you're connected to the same network as the FRITZ!Box
 - Check if TR-064 is enabled in FRITZ!Box settings
+- Generate a diagnostic report to see detailed network tests
 - Review logs to see the exact connection error
 
 ### "Connection timeout"
@@ -153,10 +209,10 @@ The implementation uses SOAP/XML requests with HTTP Digest Authentication (RFC 2
 
 ### Getting Help
 If you encounter issues:
-1. Open the Log Viewer (ℹ️ icon)
-2. Try the operation that fails
-3. Share the logs via email/GitHub issue
-4. Include your FRITZ!Box model and Android version
+1. **Generate Diagnostic Report** (tap ℹ️ icon → Generate Diagnostic Report)
+2. **Share the report** when creating a GitHub issue or asking for help
+3. **Include**: FRITZ!Box model, firmware version, Python test result
+4. See [TROUBLESHOOTING.md](TROUBLESHOOTING.md) for comprehensive debugging guide
 
 ## Building for Production
 

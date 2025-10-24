@@ -3,6 +3,12 @@
     xmlns:app="http://schemas.xmlsoap.org/apk/res-auto">
     
     <item
+        android:id="@+id/action_diagnostic"
+        android:icon="@android:drawable/ic_menu_info_details"
+        android:title="@string/generate_diagnostic_report"
+        app:showAsAction="ifRoom" />
+    
+    <item
         android:id="@+id/action_refresh"
         android:icon="@android:drawable/ic_menu_rotate"
         android:title="@string/refresh"

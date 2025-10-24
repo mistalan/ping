@@ -37,4 +37,5 @@
     <string name="share">Share</string>
     <string name="clear">Clear</string>
     <string name="loading_logs">Loading logs…</string>
+    <string name="generate_diagnostic_report">Generate Diagnostic Report</string>
 </resources>

@@ -59,6 +59,30 @@
 
     </LinearLayout>
 
+    <!-- Diagnostic Button -->
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/diagnosticButton"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:text="@string/generate_diagnostic_report"
+        app:icon="@android:drawable/ic_menu_info_details"
+        style="@style/Widget.MaterialComponents.Button"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/buttonRow" />
+
+    <!-- Progress Bar -->
+    <ProgressBar
+        android:id="@+id/progressBar"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="@id/diagnosticButton"
+        app:layout_constraintEnd_toEndOf="@id/diagnosticButton"
+        app:layout_constraintStart_toStartOf="@id/diagnosticButton"
+        app:layout_constraintTop_toTopOf="@id/diagnosticButton" />
+
     <!-- ScrollView with Log Text -->
     <ScrollView
         android:id="@+id/scrollView"
@@ -68,7 +92,7 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/buttonRow">
+        app:layout_constraintTop_toBottomOf="@id/diagnosticButton">
 
         <TextView
             android:id="@+id/logTextView"
