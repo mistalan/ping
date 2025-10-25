@@ -77,7 +77,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_columnSpan="2"
-            android:layout_columnWeight="1"
+            android:layout_gravity="fill_horizontal"
             android:text="@string/generate_diagnostic_report"
             android:textSize="12sp"
             android:padding="8dp"
