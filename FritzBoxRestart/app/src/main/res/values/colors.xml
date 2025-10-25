@@ -9,4 +9,10 @@
     <color name="white">#FFFFFFFF</color>
     <color name="fritz_red">#E30613</color>
     <color name="ic_launcher_background">#FFFFFF</color>
+    
+    <!-- Log Level Colors -->
+    <color name="log_debug">#9E9E9E</color>
+    <color name="log_info">#2196F3</color>
+    <color name="log_warning">#FF9800</color>
+    <color name="log_error">#F44336</color>
 </resources>
