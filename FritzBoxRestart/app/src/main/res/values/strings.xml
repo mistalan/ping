@@ -40,4 +40,16 @@
     <string name="clear">Clear</string>
     <string name="loading_logs">Loading logs…</string>
     <string name="generate_diagnostic_report">Generate Diagnostic Report</string>
+    
+    <!-- Log Filter -->
+    <string name="filter_all">All</string>
+    <string name="filter_debug">Debug</string>
+    <string name="filter_info">Info</string>
+    <string name="filter_warning">Warning</string>
+    <string name="filter_error">Error</string>
+    
+    <!-- Empty State -->
+    <string name="no_logs_available">No logs available</string>
+    <string name="no_logs_icon">No logs icon</string>
+    <string name="actions_menu">Actions menu</string>
 </resources>
