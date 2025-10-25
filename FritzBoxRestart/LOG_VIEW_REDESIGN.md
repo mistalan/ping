@@ -65,10 +65,10 @@ The Log View UI has been completely redesigned from scratch to address usability
 
 #### Visual Improvements
 - **Color-coded log levels:**
-  - Debug: Gray (#9E9E9E)
-  - Info: Blue (#2196F3)
-  - Warning: Orange (#FF9800)
-  - Error: Red (#F44336)
+  - Debug: Gray (#FF9E9E9E)
+  - Info: Blue (#FF2196F3)
+  - Warning: Orange (#FFFF9800)
+  - Error: Red (#FFF44336)
 - Card-based design for better visual separation
 - Proper spacing and padding following Material Design guidelines
 
@@ -127,7 +127,7 @@ The Log View UI has been completely redesigned from scratch to address usability
 
 ### Minimum SDK Support
 - Minimum SDK: 24 (Android 7.0)
-- Target SDK: 34 (Android 14)
+- Target SDK: See app/build.gradle for current target SDK version
 
 ### Layout Structure
 ```

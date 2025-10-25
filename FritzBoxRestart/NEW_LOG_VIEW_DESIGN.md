@@ -100,10 +100,10 @@ Actions available:
 ## Color Scheme
 
 ### Log Level Colors
-- **Debug (Gray)**: #9E9E9E - Low priority, routine information
-- **Info (Blue)**: #2196F3 - Normal operations, status updates
-- **Warning (Orange)**: #FF9800 - Attention needed, potential issues
-- **Error (Red)**: #F44336 - Critical issues, failures
+- **Debug (Gray)**: #FF9E9E9E - Low priority, routine information
+- **Info (Blue)**: #FF2196F3 - Normal operations, status updates
+- **Warning (Orange)**: #FFFF9800 - Attention needed, potential issues
+- **Error (Red)**: #FFF44336 - Critical issues, failures
 
 ### Material Design Colors
 - **Primary**: FRITZ!Box Red (#E30613)
@@ -188,9 +188,10 @@ Actions available:
 
 ### RecyclerView Benefits
 - Only renders visible items (view recycling)
-- Smooth scrolling even with 1000+ entries
+- Smooth scrolling for typical log files (hundreds of entries)
 - Efficient memory usage
 - Fast list updates with DiffUtil
+- Note: For extremely large log files (10,000+ entries), consider pagination or log rotation
 
 ### Loading
 - Shows progress bar while loading
