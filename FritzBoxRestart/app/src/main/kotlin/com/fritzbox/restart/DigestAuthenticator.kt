@@ -12,7 +12,7 @@ import java.security.MessageDigest
  * Based on RFC 2617
  */
 class DigestAuthenticator(
-    private val username: String,
+    private val username: String?,
     private val password: String
 ) : Authenticator {
     
@@ -60,8 +60,11 @@ class DigestAuthenticator(
         
         Log.d(TAG, "Building auth response for $method $uri")
         
+        // Use empty string if username is null (matches Python FritzConnection behavior)
+        val actualUsername = username ?: ""
+        
         // Generate response hash according to RFC 2617
-        val ha1 = md5("$username:$realm:$password")
+        val ha1 = md5("$actualUsername:$realm:$password")
         val ha2 = md5("$method:$uri")
         
         val cnonce = generateCnonce()
@@ -77,7 +80,7 @@ class DigestAuthenticator(
         
         // Build authorization header
         val authValue = buildString {
-            append("Digest username=\"$username\"")
+            append("Digest username=\"$actualUsername\"")
             append(", realm=\"$realm\"")
             append(", nonce=\"$nonce\"")
             append(", uri=\"$uri\"")
