@@ -15,20 +15,20 @@ Network monitoring tools for ping problems and disconnect analysis. Multi-langua
 ## Structure
 
 ```
-├── Python Scripts (87% coverage)
-│   ├── fritzlog_pull.py (93% coverage)
-│   ├── fritzbox_restart.py (94% coverage)
-│   ├── analyze_netlogs.py (77% coverage)
-│   ├── visualize_incidents.py (95% coverage)
+├── Python Scripts (80%+ coverage enforced)
+│   ├── fritzlog_pull.py (high coverage)
+│   ├── fritzbox_restart.py (high coverage)
+│   ├── analyze_netlogs.py (good coverage)
+│   ├── visualize_incidents.py (excellent coverage)
 │   └── verify_android_python_match.py (utility)
 ├── PowerShell Scripts (coverage enabled)
 │   ├── NetWatch.ps1
 │   └── NetWatchUI.ps1
-├── Test Files
-│   ├── test_fritzlog_pull.py (27 tests)
-│   ├── test_fritzbox_restart.py (20 tests)
-│   ├── test_analyze_netlogs.py (37 tests)
-│   ├── test_visualize_incidents.py (19 tests)
+├── Test Files (comprehensive suite)
+│   ├── test_fritzlog_pull.py
+│   ├── test_fritzbox_restart.py
+│   ├── test_analyze_netlogs.py
+│   ├── test_visualize_incidents.py
 │   └── NetWatch.Tests.ps1 (Pester)
 ├── Android/Kotlin App
 │   └── FritzBoxRestart/ (JaCoCo coverage)
@@ -44,7 +44,7 @@ Network monitoring tools for ping problems and disconnect analysis. Multi-langua
 
 ## Testing and Coverage
 
-### Python Tests (103 tests, 87% coverage)
+### Python Tests (Comprehensive Suite, 80%+ Coverage)
 **Run all tests with coverage:**
 ```bash
 pip install pytest pytest-cov fritzconnection matplotlib pandas
@@ -53,10 +53,10 @@ pytest test_*.py --cov=. --cov-report=term --cov-report=html --cov-fail-under=80
 
 **Individual test files:**
 ```bash
-pytest test_fritzlog_pull.py -v              # 27 tests
-pytest test_fritzbox_restart.py -v           # 20 tests
-pytest test_analyze_netlogs.py -v            # 37 tests
-pytest test_visualize_incidents.py -v        # 19 tests
+pytest test_fritzlog_pull.py -v
+pytest test_fritzbox_restart.py -v
+pytest test_analyze_netlogs.py -v
+pytest test_visualize_incidents.py -v
 ```
 
 **Coverage threshold:** 80% enforced in CI via `--cov-fail-under=80`
@@ -179,4 +179,4 @@ cd FritzBoxRestart && ./gradlew test jacocoTestReport
 - **Always install dependencies first** before running tests
 - **CI/CD pipeline** runs all tests automatically on push/PR
 - **Coverage reports** uploaded as artifacts in GitHub Actions
-- **.gitignore excludes** `__pycache__/`, `*.csv`, `*.log`, `htmlcov/`, `.coverage`
+- **.gitignore excludes** build artifacts: `__pycache__/`, `*.csv`, `*.log`, `htmlcov/`, `.coverage`, `.pytest_cache/`
