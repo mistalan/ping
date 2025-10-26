@@ -11,6 +11,7 @@ import os
 import csv
 import tempfile
 from datetime import datetime, timedelta
+from unittest.mock import patch
 
 import analyze_netlogs
 
