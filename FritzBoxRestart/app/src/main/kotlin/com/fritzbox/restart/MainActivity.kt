@@ -19,8 +19,7 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         
-        // Initialize LogManager
-        LogManager.init(this)
+        // LogManager is now initialized in FritzBoxApplication
         LogManager.log("MainActivity", "App started", android.util.Log.INFO)
         
         binding = ActivityMainBinding.inflate(layoutInflater)
