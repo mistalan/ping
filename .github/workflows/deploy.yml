@@ -197,21 +197,21 @@ jobs:
           Get-Content checksums-latest.txt
 
       - name: Upload ZIP artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: ping-latest-zip
           path: ping-latest.zip
           retention-days: 90
 
       - name: Upload tarball artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: ping-latest-tarball
           path: ping-latest.tar.gz
           retention-days: 90
 
       - name: Upload checksums
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: ping-latest-checksums
           path: checksums-latest.txt

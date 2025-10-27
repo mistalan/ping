@@ -169,7 +169,7 @@ jobs:
           }
 
       - name: Upload test results
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         if: always()
         with:
           name: powershell-test-results
@@ -296,7 +296,7 @@ jobs:
           Write-Host "[PASS] All Python unit tests passed with coverage >= 80%"
 
       - name: Upload Python test results
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         if: always()
         with:
           name: python-test-coverage
@@ -456,7 +456,7 @@ jobs:
           fi
 
       - name: Upload test results
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         if: always()
         with:
           name: android-unit-test-results
@@ -543,7 +543,7 @@ jobs:
           find FritzBoxRestart/app/build/outputs -type f -name "*.apk" || echo "No APK files found"
 
       - name: Upload APK artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: fritzbox-restart-debug-apk
           path: FritzBoxRestart/app/build/outputs/apk/debug/app-debug.apk
