@@ -71,7 +71,7 @@ jobs:
           python -c "import analyze_netlogs"
 
       - name: Set up JDK 17 for Android
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           java-version: '17'
           distribution: 'temurin'
